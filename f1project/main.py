@@ -38,8 +38,20 @@ def driver_standings_selection():  #(driver, year)
     #1 video of circuit if possible
     #twitter feed of circuit account
 
-def driver_standings_window():
+
+def get_driver_list():
+    table = requests.get('http://ergast.com/api/f1/drivers.json?limit=900')
+    table_content = json.loads(table.content)
+    driver_temp = table_content['MRData']['DriverTable']
+    return driver_temp['Drivers']
+
+
+def driver_standings_window_destroy(event):
     global dsw
+    dsw = None
+
+def driver_standings_window():
+    global dsw, driver_list
     if dsw:
         dsw.tkraise()
     else:
@@ -48,6 +60,11 @@ def driver_standings_window():
         dsw.geometry('1000x600')
         my_scroll = Scrollbar(dsw)
         my_scroll.pack(side=RIGHT, fill=Y)
+        dsw.bind('<Destroy>', driver_standings_window_destroy)
+        driver_listbox = Listbox(dsw, height=10, width=20)
+        driver_listbox.place(x=0, y=0)
+        for d in driver_list:
+            driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
 
 def main_window():
@@ -73,4 +90,6 @@ def main_window():
     root.mainloop()
 
 if __name__ == '__main__':
+    global driver_list
+    driver_list = get_driver_list()
     main_window()
