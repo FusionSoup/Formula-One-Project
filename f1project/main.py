@@ -3,25 +3,7 @@ import json
 from tkinter import *
 
 
-root = Tk()
-root.title('formula one')
-root.geometry('1920x1920')
-myscroll = Scrollbar(root)
-myscroll.pack(side=RIGHT, fill=Y)
-exit = Button(root, text = 'exit', bd = '110', command = root.destroy)
-exit.pack(side='top')
-driverstandings = Button(root, text = 'driverstandings', bd = '110', command = root.destroy)
-driverstandings.pack(side='top')
-raceresults = Button(root, text = 'raceresults', bd = '110', command = root.destroy)
-raceresults.pack(side='top')
-drivers = Button(root, text = 'drivers', bd = '110', command = root.destroy)
-drivers.pack(side='top')
-constructors = Button(root, text = 'constructors', bd = '110', command = root.destroy)
-constructors.pack(side='top')
-circuits = Button(root, text = 'circuits', bd = '110', command = root.destroy)
-circuits.pack(side='top')
-root.mainloop()
-
+dsw = None
 
 def driver_standings_selection():  #(driver, year)
     driver = input('driver?')
@@ -56,33 +38,39 @@ def driver_standings_selection():  #(driver, year)
     #1 video of circuit if possible
     #twitter feed of circuit account
 
-
-section = 'driver standings'
-if section == 'drivers':
-    drivers_selection()
-if section == 'seasons':
-    seasons_selection()
-if section == 'qualifying':
-    qualifying_selection()
-if section == 'race results':
-    race_results_selection()
-if section == 'driver standings':
-    driver_standings_selection()
-if section == 'constructors':
-    constructors_selection()
-if section == 'races':
-    races_selection()
-if section == 'sprint results':
-    sprint_results_selection()
-if section == 'pit stops':
-    pit_stop_selection()
-if section == 'constructor standings':
-    constructor_standings_selection()
-if section == 'cicuits':
-    circuits_selection()
-if section == 'lap times':
-    lap_times_selection()
-if section == 'constructor results':
-    constructor_results_selection()
+def driver_standings_window():
+    global dsw
+    if dsw:
+        dsw.tkraise()
+    else:
+        dsw = Tk()
+        dsw.title('driver standings')
+        dsw.geometry('1000x600')
+        my_scroll = Scrollbar(dsw)
+        my_scroll.pack(side=RIGHT, fill=Y)
 
 
+def main_window():
+    root = Tk()
+    root.title('formula one')
+    root.geometry('1200x900')
+    my_scroll = Scrollbar(root)
+    my_scroll.pack(side=RIGHT, fill=Y)
+    button_frame = LabelFrame(root, height=400, width=800, bd='5')
+    button_frame.pack(side='top')
+    exiting = Button(button_frame, text='exit', bd='5', height=20, width=40, command=root.destroy)
+    exiting.grid(row=0, column=0, pady=2)
+    driver_standings = Button(button_frame, text='driver standings', bd='5', height=20, width=40, command=driver_standings_window)
+    driver_standings.grid(row=0, column=1, pady=2)
+    race_results = Button(button_frame, text='race results', bd='5', height=20, width=40, command=root.destroy)
+    race_results.grid(row=0, column=2, pady=2)
+    drivers = Button(button_frame, text='drivers', bd='5', height=20, width=40, command=root.destroy)
+    drivers.grid(row=1, column=0, pady=2)
+    constructors = Button(button_frame, text='constructors', bd='5', height=20, width=40, command=root.destroy)
+    constructors.grid(row=1, column=1, pady=2)
+    circuits = Button(button_frame, text='circuits', bd='5', height=20, width=40, command=root.destroy)
+    circuits.grid(row=1, column=2, pady=2)
+    root.mainloop()
+
+if __name__ == '__main__':
+    main_window()
