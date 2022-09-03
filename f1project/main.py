@@ -5,16 +5,36 @@ from tkinter import *
 
 dsw = None
 
-def driver_standings_selection():  #(driver, year)
-    driver = input('driver?')
-    year = input('year?, 0 for no year')
+
+def driver_standings_selection(event):
+    global dsw, driver_list, dsw_frame
+    selection = event.widget.curselection()
+    if len(selection) != 1:
+        return
+    for slave in dsw_frame.grid_slaves():
+        slave.destroy()
+    driver_key = driver_list[selection[0]]['driverId']
+    year = '0'
     if year == '0':
-        table = requests.get("http://ergast.com/api/f1/drivers/"+driver+"/driverStandings.json")
+        table = requests.get("http://ergast.com/api/f1/drivers/"+driver_key+"/driverStandings.json")
         standings = json.loads(table.content)
         standings_table = standings['MRData']['StandingsTable']
         print(standings_table)
-        #for st in standings_table['StandingsLists']:
-           # if st['season'] == '2015': # and st['round'] == '18':
+        Label(dsw_frame, text='Year').grid(row=0, column=0)
+        Label(dsw_frame, text='Position').grid(row=0, column=1)
+        Label(dsw_frame, text='Points').grid(row=0, column=2)
+        Label(dsw_frame, text='Wins').grid(row=0, column=3)
+        Label(dsw_frame, text='Constructor').grid(row=0, column=4)
+        for i in range(len(standings_table['StandingsLists'])):
+            sl = standings_table['StandingsLists'][i]
+            print(sl['season'], sl['DriverStandings'][0]['position'], sl['DriverStandings'][0]['points'], sl['DriverStandings'][0]['wins'], sl['DriverStandings'][0]['Constructors'][0]['name'])
+            Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
+            Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
+            Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
+            Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
+            Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+
+
         # ds = st['DriverStandings']
         #print(repr(ds))
         #for d in ds:
@@ -25,15 +45,15 @@ def driver_standings_selection():  #(driver, year)
     #total points, race wins, podiums etc
     #image of driver + bio
     #twitter feed of driver account
-    driver_standings_selection(driver, year)
-    race_results_selection(driver, year)
+    #driver_standings_selection(driver, year)
+    #race_results_selection(driver, year)
 
 
 #def race_results_selection(year, driver, circuit):
 
 #def circuits_selection():
-    circuit = userinput(ciruit)
-    race_results_selection(0, 0, ciruit)
+   # circuit = userinput(ciruit)
+    #race_results_selection(0, 0, ciruit)
     #2 image of circuit
     #1 video of circuit if possible
     #twitter feed of circuit account
@@ -50,19 +70,24 @@ def driver_standings_window_destroy(event):
     global dsw
     dsw = None
 
+
 def driver_standings_window():
-    global dsw, driver_list
+    global dsw, driver_list, dsw_frame
     if dsw:
         dsw.tkraise()
     else:
         dsw = Tk()
         dsw.title('driver standings')
         dsw.geometry('1000x600')
-        my_scroll = Scrollbar(dsw)
-        my_scroll.pack(side=RIGHT, fill=Y)
         dsw.bind('<Destroy>', driver_standings_window_destroy)
-        driver_listbox = Listbox(dsw, height=10, width=20)
-        driver_listbox.place(x=0, y=0)
+        driver_listbox = Listbox(dsw, width=30)
+        driver_listbox.bind('<<ListboxSelect>>', driver_standings_selection)
+        my_scroll = Scrollbar(dsw, command=driver_listbox.yview)
+        driver_listbox.config(yscrollcommand=my_scroll.set)
+        my_scroll.pack(side=LEFT, fill=Y)
+        driver_listbox.pack(side=LEFT, fill=Y)
+        dsw_frame = Frame(dsw,)
+        dsw_frame.pack(side='right', fill='both')
         for d in driver_list:
             driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
