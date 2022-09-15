@@ -4,6 +4,7 @@ from tkinter import *
 
 
 dsw = None
+csw = None
 
 
 def driver_standings_selection(event):
@@ -33,6 +34,18 @@ def driver_standings_selection(event):
             Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
             Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
             Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+
+
+def circuit_selection(event):
+    global csw, circuit_list, csw_frame
+    selection = event.widget.curselection()
+    if len(selection) != 1:
+        return
+    for slave in csw_frame.grid_slaves():
+        slave.destroy()
+
+
+
 
 
         # ds = st['DriverStandings']
@@ -66,6 +79,15 @@ def get_driver_list():
     return driver_temp['Drivers']
 
 
+def get_circuit_list():
+    table = requests.get('http://ergast.com/api/f1/circuits.json?limit=100')
+    table_content = json.loads(table.content)
+    print(table_content)
+    circuit_temp = table_content['MRData']['CircuitTable']
+    print(circuit_temp)
+    return circuit_temp['Circuits']
+
+
 def driver_standings_window_destroy(event):
     global dsw
     dsw = None
@@ -91,6 +113,29 @@ def driver_standings_window():
         for d in driver_list:
             driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
+def circuit_window_destroy(event):
+    global csw
+    csw = None
+
+def circuit_window():
+    global csw, circuit_list
+    if csw:
+        csw.tkraise()
+    else:
+        csw = Tk()
+        csw.title('circuit information')
+        csw.geometry('1000x600')
+        csw.bind('<Destroy>', circuit_window_destroy)
+        circuit_listbox = Listbox(csw, width=30)
+        circuit_listbox.bind('<<ListboxSelect>>', circuit_selection)
+        my_scroll2 = Scrollbar(csw, command=circuit_listbox.yview)
+        circuit_listbox.config(yscrollcommand=my_scroll2.set)
+        my_scroll2.pack(side=LEFT, fill=Y)
+        circuit_listbox.pack(side=LEFT, fill=Y)
+        csw_frame = Frame(dsw,)
+        csw_frame.pack(side='right', fill='both')
+        for c in circuit_list:
+            circuit_listbox.insert('end', c['CircuitName'] + ' ' + c['country'])
 
 def main_window():
     root = Tk()
@@ -110,11 +155,15 @@ def main_window():
     drivers.grid(row=1, column=0, pady=2)
     constructors = Button(button_frame, text='constructors', bd='5', height=20, width=40, command=root.destroy)
     constructors.grid(row=1, column=1, pady=2)
-    circuits = Button(button_frame, text='circuits', bd='5', height=20, width=40, command=root.destroy)
+    circuits = Button(button_frame, text='circuits', bd='5', height=20, width=40, command=circuit_window)
     circuits.grid(row=1, column=2, pady=2)
     root.mainloop()
 
+
+get_circuit_list()
+
 if __name__ == '__main__':
-    global driver_list
+    global driver_list, circuit_list
     driver_list = get_driver_list()
+    circuit_list = get_circuit_list()
     main_window()
