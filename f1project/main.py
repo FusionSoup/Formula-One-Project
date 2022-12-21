@@ -2,23 +2,20 @@ import requests
 import json
 import wikipediaapi
 from tkinter import *
+from ergast import Ergast
 
 
-# Global variables
-dsw = None
-csw = None
-csw_frame = None
-dsw_frame = None
+global database, dsw, csw, csw_frame, dsw_frame
 
 
 def driver_standings_selection(event):
-    global dsw, driver_list, dsw_frame
+    global dsw, dsw_frame, database
     selection = event.widget.curselection()
     if len(selection) != 1:
         return
     for slave in dsw_frame.grid_slaves():
         slave.destroy()
-    driver_key = driver_list[selection[0]]['driverId']
+    driver_key = database.driver_list[selection[0]]['driverId']
     table = requests.get("http://ergast.com/api/f1/drivers/"+driver_key+"/driverStandings.json")
     standings = json.loads(table.content)
     standings_table = standings['MRData']['StandingsTable']
@@ -37,29 +34,26 @@ def driver_standings_selection(event):
 
 
 def circuit_selection(event):
-    global csw, circuit_list, csw_frame
+    global csw, csw_frame, database
     selection = event.widget.curselection()
     if len(selection) != 1:
         return
     for slave in csw_frame.grid_slaves():
         slave.destroy()
-    circuit_key = circuit_list[selection[0]]['circuitId']
-    #table = requests.get("http://ergast.com/api/f1/drivers/" + driver_key + "/driverStandings.json")
-    #standings = json.loads(table.content)
-    #standings_table = standings['MRData']['StandingsTable']
+    circuit_key = database.circuit_list[selection[0]]['circuitId']
     cdp = Grid(csw_frame).grid
-    Label(dsw_frame, text='').grid(row=0, column=0)
-    Label(dsw_frame, text='Position').grid(row=0, column=1)
-    Label(dsw_frame, text='Points').grid(row=0, column=2)
-    Label(dsw_frame, text='Wins').grid(row=0, column=3)
-    Label(dsw_frame, text='Constructor').grid(row=0, column=4)
-    for i in range(len(standings_table['StandingsLists'])):
-        sl = standings_table['StandingsLists'][i]
-        Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
-        Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
-        Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
-        Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
-        Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+    #Label(dsw_frame, text='').grid(row=0, column=0)
+    #Label(dsw_frame, text='Position').grid(row=0, column=1)
+    #Label(dsw_frame, text='Points').grid(row=0, column=2)
+    #Label(dsw_frame, text='Wins').grid(row=0, column=3)
+    #Label(dsw_frame, text='Constructor').grid(row=0, column=4)
+    #for i in range(len(standings_table['StandingsLists'])):
+    #    sl = standings_table['StandingsLists'][i]
+    #    Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
+    #    Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
+    #    Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
+    #    Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
+    #    Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
 
 
 def get_wikipedia_summary(page):
@@ -84,29 +78,13 @@ def get_wikipedia_summary(page):
 #def race_results_selection(year, driver, circuit):
 
 
-def get_driver_list():
-    table = requests.get('http://ergast.com/api/f1/drivers.json?limit=900')
-    table_content = json.loads(table.content)
-    driver_temp = table_content['MRData']['DriverTable']
-    return driver_temp['Drivers']
-
-
-def get_circuit_list():
-    table = requests.get('http://ergast.com/api/f1/circuits.json?limit=100')
-    table_content = json.loads(table.content)
-    print(table_content)
-    circuit_temp = table_content['MRData']['CircuitTable']
-    print(circuit_temp)
-    return circuit_temp['Circuits']
-
-
 def driver_standings_window_destroy(event):
     global dsw
     dsw = None
 
 
 def driver_standings_window():
-    global dsw, driver_list, dsw_frame
+    global dsw, dsw_frame, database
     if dsw:
         dsw.tkraise()
     else:
@@ -122,7 +100,7 @@ def driver_standings_window():
         driver_listbox.pack(side=LEFT, fill=Y)
         dsw_frame = Frame(dsw,)
         dsw_frame.pack(side='right', fill='both')
-        for d in driver_list:
+        for d in database.driver_list:
             driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
 
@@ -132,7 +110,7 @@ def circuit_window_destroy(event):
 
 
 def circuit_window():
-    global csw, circuit_list, csw_frame
+    global csw, csw_frame, database
     if csw:
         csw.tkraise()
     else:
@@ -148,7 +126,7 @@ def circuit_window():
         circuit_listbox.pack(side=LEFT, fill=Y)
         csw_frame = Frame(dsw,)
         csw_frame.pack(side='right', fill='both')
-        for c in circuit_list:
+        for c in database.circuit_list:
             circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
 
 
@@ -175,8 +153,24 @@ def main_window():
     root.mainloop()
 
 
+def save_database(db, filename):
+    db.save_to_file(filename)
+
+
+def load_database(db, filename):
+    db.load_from_file(filename)
+
+
+def get_database_from_web(db):
+    db.get_data()
+
+
 if __name__ == '__main__':
-    global driver_list, circuit_list
-    driver_list = get_driver_list()
-    circuit_list = get_circuit_list()
+    global database
+    database = Ergast()
+    try:
+        get_database_from_web(database)
+        save_database(database, 'database.bin')
+    except json.decoder.JSONDecodeError:
+        load_database(database, 'database.bin')
     main_window()
