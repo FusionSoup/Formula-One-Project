@@ -1,6 +1,7 @@
 import json
 import wikipediaapi
 from tkinter import *
+from tk_html_widgets import HTMLLabel
 from ergast import Ergast
 
 global database
@@ -40,10 +41,12 @@ def circuit_selection(event):
         return
     for slave in csw_frame.grid_slaves():
         slave.destroy()
-    circuit_key = database.circuit_list[selection[0]]['circuitId']
-    cdp = Grid(csw_frame).grid
-    #Label(dsw_frame, text='').grid(row=0, column=0)
-    #Label(dsw_frame, text='Position').grid(row=0, column=1)
+    circuit = database.circuit_list[selection[0]]
+    circuit_key = circuit['circuitId']
+    location_text = f"{circuit['circuitName']}, {circuit['Location']['locality']}, {circuit['Location']['country']}"
+    wiki_text = get_wikipedia_summary(circuit['url'].split('/')[-1])
+    Label(csw_frame, text=location_text).grid(row=0, column=0)
+    Label(csw_frame, text=wiki_text, width=80, wraplength=560, ).grid(row=2, column=0)
     #Label(dsw_frame, text='Points').grid(row=0, column=2)
     #Label(dsw_frame, text='Wins').grid(row=0, column=3)
     #Label(dsw_frame, text='Constructor').grid(row=0, column=4)
@@ -124,8 +127,8 @@ def circuit_window():
         circuit_listbox.config(yscrollcommand=my_scroll2.set)
         my_scroll2.pack(side=LEFT, fill=Y)
         circuit_listbox.pack(side=LEFT, fill=Y)
-        csw_frame = Frame(dsw,)
-        csw_frame.pack(side='right', fill='both')
+        csw_frame = Frame(csw,)
+        csw_frame.pack(side='top', fill=NONE, expand=True)
         for c in database.circuit_list:
             circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
 
