@@ -1,10 +1,14 @@
 import requests
 import json
+import wikipediaapi
 from tkinter import *
 
 
+# Global variables
 dsw = None
 csw = None
+csw_frame = None
+dsw_frame = None
 
 
 def driver_standings_selection(event):
@@ -15,25 +19,21 @@ def driver_standings_selection(event):
     for slave in dsw_frame.grid_slaves():
         slave.destroy()
     driver_key = driver_list[selection[0]]['driverId']
-    year = '0'
-    if year == '0':
-        table = requests.get("http://ergast.com/api/f1/drivers/"+driver_key+"/driverStandings.json")
-        standings = json.loads(table.content)
-        standings_table = standings['MRData']['StandingsTable']
-        print(standings_table)
-        Label(dsw_frame, text='Year').grid(row=0, column=0)
-        Label(dsw_frame, text='Position').grid(row=0, column=1)
-        Label(dsw_frame, text='Points').grid(row=0, column=2)
-        Label(dsw_frame, text='Wins').grid(row=0, column=3)
-        Label(dsw_frame, text='Constructor').grid(row=0, column=4)
-        for i in range(len(standings_table['StandingsLists'])):
-            sl = standings_table['StandingsLists'][i]
-            print(sl['season'], sl['DriverStandings'][0]['position'], sl['DriverStandings'][0]['points'], sl['DriverStandings'][0]['wins'], sl['DriverStandings'][0]['Constructors'][0]['name'])
-            Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
-            Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
-            Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
-            Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
-            Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+    table = requests.get("http://ergast.com/api/f1/drivers/"+driver_key+"/driverStandings.json")
+    standings = json.loads(table.content)
+    standings_table = standings['MRData']['StandingsTable']
+    Label(dsw_frame, text='Year').grid(row=0, column=0)
+    Label(dsw_frame, text='Position').grid(row=0, column=1)
+    Label(dsw_frame, text='Points').grid(row=0, column=2)
+    Label(dsw_frame, text='Wins').grid(row=0, column=3)
+    Label(dsw_frame, text='Constructor').grid(row=0, column=4)
+    for i in range(len(standings_table['StandingsLists'])):
+        sl = standings_table['StandingsLists'][i]
+        Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
 
 
 def circuit_selection(event):
@@ -43,10 +43,29 @@ def circuit_selection(event):
         return
     for slave in csw_frame.grid_slaves():
         slave.destroy()
+    circuit_key = circuit_list[selection[0]]['circuitId']
+    #table = requests.get("http://ergast.com/api/f1/drivers/" + driver_key + "/driverStandings.json")
+    #standings = json.loads(table.content)
+    #standings_table = standings['MRData']['StandingsTable']
+    cdp = Grid(csw_frame).grid
+    Label(dsw_frame, text='').grid(row=0, column=0)
+    Label(dsw_frame, text='Position').grid(row=0, column=1)
+    Label(dsw_frame, text='Points').grid(row=0, column=2)
+    Label(dsw_frame, text='Wins').grid(row=0, column=3)
+    Label(dsw_frame, text='Constructor').grid(row=0, column=4)
+    for i in range(len(standings_table['StandingsLists'])):
+        sl = standings_table['StandingsLists'][i]
+        Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
+        Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
 
 
-
-
+def get_wikipedia_summary(page):
+    wiki_wiki = wikipediaapi.Wikipedia('en')
+    wiki = wiki_wiki.page(page)
+    return wiki.summary
 
         # ds = st['DriverStandings']
         #print(repr(ds))
@@ -63,13 +82,6 @@ def circuit_selection(event):
 
 
 #def race_results_selection(year, driver, circuit):
-
-#def circuits_selection():
-   # circuit = userinput(ciruit)
-    #race_results_selection(0, 0, ciruit)
-    #2 image of circuit
-    #1 video of circuit if possible
-    #twitter feed of circuit account
 
 
 def get_driver_list():
@@ -113,12 +125,14 @@ def driver_standings_window():
         for d in driver_list:
             driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
+
 def circuit_window_destroy(event):
     global csw
     csw = None
 
+
 def circuit_window():
-    global csw, circuit_list
+    global csw, circuit_list, csw_frame
     if csw:
         csw.tkraise()
     else:
@@ -135,7 +149,8 @@ def circuit_window():
         csw_frame = Frame(dsw,)
         csw_frame.pack(side='right', fill='both')
         for c in circuit_list:
-            circuit_listbox.insert('end', c['CircuitName'] + ' ' + c['country'])
+            circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
+
 
 def main_window():
     root = Tk()
@@ -159,8 +174,6 @@ def main_window():
     circuits.grid(row=1, column=2, pady=2)
     root.mainloop()
 
-
-get_circuit_list()
 
 if __name__ == '__main__':
     global driver_list, circuit_list
