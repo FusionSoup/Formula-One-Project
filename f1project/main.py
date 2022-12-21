@@ -1,11 +1,13 @@
-import requests
 import json
 import wikipediaapi
 from tkinter import *
 from ergast import Ergast
 
-
-global database, dsw, csw, csw_frame, dsw_frame
+global database
+dsw = None
+csw = None
+dsw_frame = None
+csw_frame = None
 
 
 def driver_standings_selection(event):
@@ -16,9 +18,7 @@ def driver_standings_selection(event):
     for slave in dsw_frame.grid_slaves():
         slave.destroy()
     driver_key = database.driver_list[selection[0]]['driverId']
-    table = requests.get("http://ergast.com/api/f1/drivers/"+driver_key+"/driverStandings.json")
-    standings = json.loads(table.content)
-    standings_table = standings['MRData']['StandingsTable']
+    standings_table = database.get_driver_standings(driver_key)
     Label(dsw_frame, text='Year').grid(row=0, column=0)
     Label(dsw_frame, text='Position').grid(row=0, column=1)
     Label(dsw_frame, text='Points').grid(row=0, column=2)
@@ -169,6 +169,7 @@ if __name__ == '__main__':
     global database
     database = Ergast()
     try:
+        # raise json.decoder.JSONDecodeError('blah', 'dgya', 1)
         get_database_from_web(database)
         save_database(database, 'database.bin')
     except json.decoder.JSONDecodeError:
