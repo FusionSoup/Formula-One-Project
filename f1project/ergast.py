@@ -23,6 +23,21 @@ class Ergast:
         driver_temp = table_content['MRData']['DriverTable']
         self.driver_list = driver_temp['Drivers']
 
+    def get_seasons_for_driver(self, driverId):
+        """Retrieve a list of seasons in which a driver competed"""
+        # http://ergast.com/api/f1/drivers/alonso/constructors/renault/seasons
+        table = requests.get(self.url + f'drivers/{driverId}/seasons.json')
+        table_content = json.loads(table.content)
+
+        season_table = table_content['MRData']['SeasonTable']['Seasons']
+        # Equivalent to
+        # season_list = []
+        # for s in season_table:
+        #     season_list.append(s['season'])
+        season_list = [s['season'] for s in season_table]
+        return season_list
+
+
     def _get_circuit_list(self):
         """Retrieve a list with one entry per circuit"""
         table = requests.get(self.url + 'circuits.json?limit=100')

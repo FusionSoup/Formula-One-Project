@@ -1,18 +1,18 @@
 import json
 import wikipediaapi
 from tkinter import *
-from tk_html_widgets import HTMLLabel
 from ergast import Ergast
 
 global database
 dsw = None
 csw = None
+d_frame = None
 dsw_frame = None
 csw_frame = None
 
 
 def driver_standings_selection(event):
-    global dsw, dsw_frame, database
+    global dsw, d_frame, dsw_frame, database
     selection = event.widget.curselection()
     if len(selection) != 1:
         return
@@ -32,6 +32,14 @@ def driver_standings_selection(event):
         Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
         Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
         Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+
+    seasons_list = database.get_seasons_for_driver(driver_key)
+    seasons_list.reverse()
+    selected_season = StringVar()
+    selected_season.set(seasons_list[0])
+    seasons_menu = OptionMenu(d_frame, selected_season, *seasons_list)
+    seasons_menu.grid(row=0, column=0)
+    #seasons_menu.bind('<<OptionMenuSelect>>', driver_standings_selection)
 
 
 def circuit_selection(event):
@@ -87,12 +95,12 @@ def driver_standings_window_destroy(event):
 
 
 def driver_standings_window():
-    global dsw, dsw_frame, database
+    global dsw, d_frame, dsw_frame, database
     if dsw:
         dsw.tkraise()
     else:
         dsw = Tk()
-        dsw.title('driver standings')
+        dsw.title('Drivers')
         dsw.geometry('1000x600')
         dsw.bind('<Destroy>', driver_standings_window_destroy)
         driver_listbox = Listbox(dsw, width=30)
@@ -101,8 +109,11 @@ def driver_standings_window():
         driver_listbox.config(yscrollcommand=my_scroll.set)
         my_scroll.pack(side=LEFT, fill=Y)
         driver_listbox.pack(side=LEFT, fill=Y)
-        dsw_frame = Frame(dsw,)
-        dsw_frame.pack(side='right', fill='both')
+        d_frame = Frame(dsw,)
+        d_frame.pack(side='right', fill='both')
+        dsw_frame = Frame(d_frame,)
+        dsw_frame.grid(row=0, column=2)
+
         for d in database.driver_list:
             driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
 
@@ -143,12 +154,10 @@ def main_window():
     button_frame.pack(side='top')
     exiting = Button(button_frame, text='exit', bd='5', height=20, width=40, command=root.destroy)
     exiting.grid(row=0, column=0, pady=2)
-    driver_standings = Button(button_frame, text='driver standings', bd='5', height=20, width=40, command=driver_standings_window)
+    driver_standings = Button(button_frame, text='Drivers', bd='5', height=20, width=40, command=driver_standings_window)
     driver_standings.grid(row=0, column=1, pady=2)
     race_results = Button(button_frame, text='race results', bd='5', height=20, width=40, command=root.destroy)
     race_results.grid(row=0, column=2, pady=2)
-    drivers = Button(button_frame, text='drivers', bd='5', height=20, width=40, command=root.destroy)
-    drivers.grid(row=1, column=0, pady=2)
     constructors = Button(button_frame, text='constructors', bd='5', height=20, width=40, command=root.destroy)
     constructors.grid(row=1, column=1, pady=2)
     circuits = Button(button_frame, text='circuits', bd='5', height=20, width=40, command=circuit_window)
@@ -175,6 +184,6 @@ if __name__ == '__main__':
         # raise json.decoder.JSONDecodeError('blah', 'dgya', 1)
         get_database_from_web(database)
         save_database(database, 'database.bin')
-    except json.decoder.JSONDecodeError:
+    except (json.decoder.JSONDecodeError, ConnectionRefusedError):
         load_database(database, 'database.bin')
     main_window()
