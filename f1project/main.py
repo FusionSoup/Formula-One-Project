@@ -16,7 +16,6 @@ class F1Gui:
         self.dsw = None
         self.d_frame = None
         self.dsw_frame = None
-        self.driver_standings = None
         self.csw = None
         self.csw_frame = None
 
@@ -44,10 +43,12 @@ class F1Gui:
         seasons_list = self.database.get_seasons_for_driver(driver_key)
         seasons_list.reverse()
         selected_season = StringVar()
-        seasons_menu = OptionMenu(self.d_frame, selected_season, *seasons_list)
+        seasons_menu = ttk.OptionMenu(self.d_frame, selected_season, seasons_list[0], *seasons_list, command=self.season_selection)
         seasons_menu.grid(row=0, column=0)
         selected_season.set(seasons_list[0])
-        # seasons_menu.bind('<<OptionMenuSelect>>', driver_standings_selection)
+
+    def season_selection(self, selection):
+        print('selected'+str(selection))
 
     def circuit_selection(self, event):
         selection = event.widget.curselection()
@@ -129,18 +130,20 @@ class F1Gui:
         self.root.geometry('1200x900')
         # my_scroll = ttk.Scrollbar(self.frame)
         # my_scroll.pack(side=RIGHT, fill=Y)
-        button_frame = ttk.LabelFrame(self.frame, height=400, width=800)
+        button_frame = ttk.LabelFrame(self.frame, height=400, width=800, text="Main menu")
         button_frame.pack(side='top')
-        exiting = ttk.Button(button_frame, text='exit', width=40, command=root.destroy)
+        style = ttk.Style()
+        style.configure('TButton', padding=5, width=40)
+        exiting = ttk.Button(button_frame, text='exit', style='TButton', command=root.destroy)
         exiting.grid(row=0, column=0, pady=2)
-        self.driver_standings = ttk.Button(button_frame, text='Drivers', width=40,
-                                           command=self.driver_standings_window)
-        self.driver_standings.grid(row=0, column=1, pady=2)
-        race_results = ttk.Button(button_frame, text='race results', width=40, command=root.destroy)
+        driver_standings = ttk.Button(button_frame, text='Drivers',
+                                      command=self.driver_standings_window)
+        driver_standings.grid(row=0, column=1, pady=2)
+        race_results = ttk.Button(button_frame, text='race results', style='TButton', command=root.destroy)
         race_results.grid(row=0, column=2, pady=2)
-        constructors = ttk.Button(button_frame, text='constructors', width=40, command=root.destroy)
+        constructors = ttk.Button(button_frame, text='constructors', style='TButton', command=root.destroy)
         constructors.grid(row=1, column=1, pady=2)
-        circuits = ttk.Button(button_frame, text='circuits', width=40, command=self.circuit_window)
+        circuits = ttk.Button(button_frame, text='circuits', style='TButton', command=self.circuit_window)
         circuits.grid(row=1, column=2, pady=2)
         root.mainloop()
 
