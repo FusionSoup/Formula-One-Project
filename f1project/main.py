@@ -18,6 +18,8 @@ class F1Gui:
         self.dsw = None
         self.d_frame = None
         self.ds_frame = None
+        self.driver_key = None
+        self.s_frame = None
         self.csw = None
         self.csw_frame = None
 
@@ -31,8 +33,8 @@ class F1Gui:
 
         # Get info for the selected driver
         driver = self.database.driver_list[selection[0]]
-        driver_key = driver['driverId']
-        standings_table = self.database.get_driver_standings(driver_key)
+        self.driver_key = driver['driverId']
+        standings_table = self.database.get_driver_standings(self.driver_key)
 
         # Create driver standings frame
         self.ds_frame = ttk.Frame(self.d_frame)
@@ -56,17 +58,32 @@ class F1Gui:
         dst.configure(state='disabled')
         dst.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
 
+        # Create season frame
+        self.s_frame = ttk.Frame(self.d_frame)
+        self.s_frame.grid(row=0, column=0, sticky=[N, E, S, W])
+
         # Create season selector
-        seasons_list = self.database.get_seasons_for_driver(driver_key)
+        seasons_list = self.database.get_seasons_for_driver(self.driver_key)
         seasons_list.reverse()
         selected_season = StringVar()
         selected_season.set(seasons_list[0])
-        seasons_menu = ttk.OptionMenu(self.d_frame, selected_season, seasons_list[0], *seasons_list,
+        seasons_menu = ttk.OptionMenu(self.s_frame, selected_season, seasons_list[0], *seasons_list,
                                       command=self.season_selection)
-        seasons_menu.grid(row=0, column=0)
+        seasons_menu.grid(row=0, column=0, columnspan=4)
 
     def season_selection(self, selection):
-        print('selected'+str(selection))
+        # Clear s_frame rows 1-end
+        for s in self.s_frame.grid_slaves():
+            if s.grid_info()['row'] > 0:
+                s.destroy()
+        results = self.database.get_driver_results_for_season(self.driver_key, selection)
+        for i in range(len(results)):
+            print(results[i])
+            for j in range(len(results[i])):
+                ttk.Label(self.s_frame, text=results[i][j]).grid(column=j, row=i + 1)
+
+    def driver_race_click(self, race):
+        print(race)
 
     def circuit_selection(self, event):
         selection = event.widget.curselection()
