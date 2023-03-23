@@ -79,11 +79,15 @@ class F1Gui:
         results = self.database.get_driver_results_for_season(self.driver_key, selection)
         for i in range(len(results)):
             print(results[i])
-            for j in range(len(results[i])):
-                ttk.Label(self.s_frame, text=results[i][j]).grid(column=j, row=i + 1)
+            for j in range(len(results[i]) - 1):
+                label = ttk.Label(self.s_frame, text=results[i][j], name=results[i][-1] + str(j))
+                label.grid(column=j, row=i + 1)
+                # Clicking on this row takes the user to that race
+                label.bind('<Button-1>',
+                           lambda evt, year=selection, circuit=results[i][2]: self.driver_race_click(evt, year, circuit))
 
-    def driver_race_click(self, race):
-        print(race)
+    def driver_race_click(self, evt, year, circuit_id):
+        print(year, circuit_id)
 
     def circuit_selection(self, event):
         selection = event.widget.curselection()
@@ -92,11 +96,14 @@ class F1Gui:
         for slave in self.csw_frame.grid_slaves():
             slave.destroy()
         circuit = self.database.circuit_list[selection[0]]
-        circuit_key = circuit['circuitId']
-        location_text = f"{circuit['circuitName']}, {circuit['Location']['locality']}, {circuit['Location']['country']}"
-        wiki_text = self.get_wikipedia_summary(circuit['url'].split('/')[-1])
-        Label(self.csw_frame, text=location_text).grid(row=0, column=0)
-        Label(self.csw_frame, text=wiki_text, width=80, wraplength=560, ).grid(row=2, column=0)
+        #circuit_key = circuit['circuitId']
+        #location_text = f"{circuit['circuitName']}, {circuit['Location']['locality']}, {circuit['Location']['country']}"
+        circuit_info = HTMLScrolledText(self.csw_frame, width=70, height=15, padx=10, pady=1)
+        circuit_info.set_html(self.get_wikipedia_summary(circuit['url'].split('/')[-1]))
+        circuit_info.configure(state='disabled')
+        circuit_info.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
+        #Label(self.csw_frame, text=location_text).grid(row=0, column=0)
+        #Label(self.csw_frame, text=wiki_text, width=80, wraplength=560, ).grid(row=2, column=0)
         #Label(dsw_frame, text='Points').grid(row=0, column=2)
         #Label(dsw_frame, text='Wins').grid(row=0, column=3)
         #Label(dsw_frame, text='Constructor').grid(row=0, column=4)

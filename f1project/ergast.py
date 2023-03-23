@@ -43,7 +43,7 @@ class Ergast:
         table = requests.get(self.url + f'{season}/drivers/{driver_id}/results.json')
         table_content = json.loads(table.content)
         driver_race_results_table = table_content['MRData']['RaceTable']['Races']
-        driver_race_results_list = [(r['Results'][0]['position'], r['raceName']) for r in driver_race_results_table]
+        driver_race_results_list = [(r['Results'][0]['position'], r['raceName'], r['Circuit']['circuitId']) for r in driver_race_results_table]
         return driver_race_results_list
 
     def _get_circuit_list(self):
