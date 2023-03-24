@@ -37,6 +37,17 @@ class Ergast:
         season_list = [s['season'] for s in season_table]
         return season_list
 
+    def get_seasons_for_circuit(self, circuit_id):
+        """Retrieve a list of seasons in which a circuit was used"""
+        table = requests.get(self.url + f'circuits/{circuit_id}/seasons.json')
+        table_content = json.loads(table.content)
+        print(table_content)
+        season_table = table_content['MRData']['SeasonTable']['Seasons']
+        season_list = [s['season'] for s in season_table]
+        print(season_table)
+        print(season_list)
+        return season_list
+
     def get_driver_results_for_season(self, driver_id, season):
         """Retrieve a list of (position, race name) results for a specific driver in a season"""
         # http://ergast.com/api/f1/2008/drivers/alonso/results
@@ -45,6 +56,18 @@ class Ergast:
         driver_race_results_table = table_content['MRData']['RaceTable']['Races']
         driver_race_results_list = [(r['Results'][0]['position'], r['raceName'], r['Circuit']['circuitId']) for r in driver_race_results_table]
         return driver_race_results_list
+
+    def get_circuit_results_for_season(self, circuit_id, season):
+        """Retrieve a list of (position, driver name) results for a specific circuit in a season"""
+        table = requests.get(self.url + f'{season}/circuits/{circuit_id}/results.json')
+        table_content = json.loads(table.content)
+        circuit_race_results_table = table_content['MRData']['RaceTable']['Races'][0]['Results']
+        circuit_race_results_list = []
+        for r in circuit_race_results_table:
+            name = r['Driver']['givenName'] + ' ' + r['Driver']['familyName']
+            circuit_race_results_list.append([r['position'], name, r['Driver']['driverId']])
+        return circuit_race_results_list
+
 
     def _get_circuit_list(self):
         """Retrieve a list with one entry per circuit"""

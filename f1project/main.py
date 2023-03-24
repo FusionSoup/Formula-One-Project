@@ -22,6 +22,8 @@ class F1Gui:
         self.s_frame = None
         self.csw = None
         self.csw_frame = None
+        self.c_frame = None
+        self.circuit_key = None
 
     def driver_standings_selection(self, event):
         selection = event.widget.curselection()
@@ -68,10 +70,10 @@ class F1Gui:
         selected_season = StringVar()
         selected_season.set(seasons_list[0])
         seasons_menu = ttk.OptionMenu(self.s_frame, selected_season, seasons_list[0], *seasons_list,
-                                      command=self.season_selection)
+                                      command=self.driver_season_selection)
         seasons_menu.grid(row=0, column=0, columnspan=4)
 
-    def season_selection(self, selection):
+    def driver_season_selection(self, selection):
         # Clear s_frame rows 1-end
         for s in self.s_frame.grid_slaves():
             if s.grid_info()['row'] > 0:
@@ -96,29 +98,49 @@ class F1Gui:
         for slave in self.csw_frame.grid_slaves():
             slave.destroy()
         circuit = self.database.circuit_list[selection[0]]
-        #circuit_key = circuit['circuitId']
-        #location_text = f"{circuit['circuitName']}, {circuit['Location']['locality']}, {circuit['Location']['country']}"
         circuit_info = HTMLScrolledText(self.csw_frame, width=70, height=15, padx=10, pady=1)
         circuit_info.set_html(self.get_wikipedia_summary(circuit['url'].split('/')[-1]))
         circuit_info.configure(state='disabled')
         circuit_info.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
-        #Label(self.csw_frame, text=location_text).grid(row=0, column=0)
-        #Label(self.csw_frame, text=wiki_text, width=80, wraplength=560, ).grid(row=2, column=0)
-        #Label(dsw_frame, text='Points').grid(row=0, column=2)
-        #Label(dsw_frame, text='Wins').grid(row=0, column=3)
-        #Label(dsw_frame, text='Constructor').grid(row=0, column=4)
-        #for i in range(len(standings_table['StandingsLists'])):
-        #    sl = standings_table['StandingsLists'][i]
-        #    Label(dsw_frame, text=sl['season']).grid(row=i + 1, column=0)
-        #    Label(dsw_frame, text=sl['DriverStandings'][0]['position']).grid(row=i + 1, column=1)
-        #    Label(dsw_frame, text=sl['DriverStandings'][0]['points']).grid(row=i + 1, column=2)
-        #    Label(dsw_frame, text=sl['DriverStandings'][0]['wins']).grid(row=i + 1, column=3)
-        #    Label(dsw_frame, text=sl['DriverStandings'][0]['Constructors'][0]['name']).grid(row=i + 1, column=4)
+
+        # Create circuit season frame
+        self.c_frame = ttk.Frame(self.csw_frame)
+        self.c_frame.grid(row=0, column=0, sticky=[N, E, S, W])
+        self.circuit_key = circuit['circuitId']
+        seasons_list = self.database.get_seasons_for_circuit(self.circuit_key)
+        print(seasons_list)
+        seasons_list.reverse()
+        selected_season = StringVar()
+        if len(seasons_list) > 0:
+            selected_season.set(seasons_list[0])
+            seasons_menu = ttk.OptionMenu(self.csw_frame, selected_season, seasons_list[0], *seasons_list,
+                                          command=self.circuit_season_selection)
+            seasons_menu.grid(row=0, column=0, columnspan=4)
+
+    def circuit_season_selection(self, selection):
+        for s in self.c_frame.grid_slaves():
+            if s.grid_info()['row'] > 0:
+                s.destroy()
+        results = self.database.get_circuit_results_for_season(self.circuit_key, selection)
+        for i in range(len(results)):
+            print(results[i])
+            for j in range(len(results[i]) - 1):
+                label = ttk.Label(self.c_frame, text=results[i][j], name=results[i][-1] + str(j))
+                label.grid(column=j, row=i + 1)
+                # Clicking on this row takes the user to that race
+                label.bind('<Button-1>',
+                           lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(evt, year, driver))
+
+    def circuit_driver_click(self, evt, year, driver_id):
+        print(year, driver_id)
 
     def get_wikipedia_summary(self, page):
-        wiki_wiki = wikipediaapi.Wikipedia('en', extract_format=wikipediaapi.ExtractFormat.HTML)
-        wiki = wiki_wiki.page(page)
-        return wiki.summary
+        try:
+            wiki_wiki = wikipediaapi.Wikipedia('en', extract_format=wikipediaapi.ExtractFormat.HTML)
+            wiki = wiki_wiki.page(page).summary
+        except Exception:
+            wiki = 'Wikipedia offline'
+        return wiki
 
     def driver_standings_window_destroy(self, event):
         self.dsw = None
@@ -221,6 +243,7 @@ if __name__ == '__main__':
     except (json.decoder.JSONDecodeError, ConnectionRefusedError, ConnectionError):
         load_database(database, 'database.bin')
 
+    database.get_circuit_results_for_season('monza', '2010')
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
