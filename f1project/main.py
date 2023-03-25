@@ -5,8 +5,9 @@ from tkinter import ttk
 from ergast import Ergast
 from tk_html_widgets import HTMLScrolledText
 from requests.exceptions import ConnectionError
+from PIL import ImageTk
 import PIL
-
+from simulation import *
 
 
 class F1Gui:
@@ -26,6 +27,7 @@ class F1Gui:
         self.csw_frame = None
         self.c_frame = None
         self.circuit_key = None
+        self.ssw = None
 
     def driver_standings_selection(self, event):
         selection = event.widget.curselection()
@@ -63,15 +65,16 @@ class F1Gui:
         dst.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
 
         # Load the image
-        im = PIL.ImageTk.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
-        img = PIL.ImageTk.PhotoImage(im)
+        im = PIL.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
+        resized_image = im.resize((200, 200))
+        img = ImageTk.PhotoImage(resized_image)
 
         # Create a Tkinter-compatible image
         #driver_image = ImageTk.PhotoImage(name='C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
 
         # Create a label widget with the image
         driver_image_label = Label(self.d_frame, image=img)
-        driver_image_label.image = img
+       # driver_image_label.image = img
 
         # Display the label widget
         driver_image_label.grid(row=2, column=1, sticky=[N, E, S, W])
@@ -206,6 +209,18 @@ class F1Gui:
             for c in self.database.circuit_list:
                 circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
 
+    def simulation_window_destroy(self, event):
+        self.ssw = None
+
+    def simulation_window(self):
+        if self.ssw:
+            self.ssw.tkraise()
+        else:
+            self.ssw = Tk()
+            self.ssw.title('Simulation Game')
+            self.ssw.geometry('1000x600')
+            self.ssw.bind('<Destroy>', self.simulation_window_destroy)
+
     def main_window(self):
         """Create the main menu"""
         self.root.title('Formula One')
@@ -224,18 +239,19 @@ class F1Gui:
         race_results = ttk.Button(button_frame, text='race results', style='TButton', command=root.destroy)
         constructors = ttk.Button(button_frame, text='constructors', style='TButton', command=root.destroy)
         circuits = ttk.Button(button_frame, text='circuits', style='TButton', command=self.circuit_window)
-
+        simulation_game = ttk.Button(button_frame, text='Simulation Game', style='TButton', command=self.simulation_window)
         # Place the buttons in the grid
         exiting.         grid(row=0, column=0, pady=2, sticky=[N, E, S, W])
         driver_standings.grid(row=0, column=1, pady=2, sticky=[N, E, S, W])
         race_results.    grid(row=0, column=2, pady=2, sticky=[N, E, S, W])
         constructors.    grid(row=1, column=1, pady=2, sticky=[N, E, S, W])
         circuits.        grid(row=1, column=2, pady=2, sticky=[N, E, S, W])
+        simulation_game. grid(row=1, column=0, pady=2, sticky=[N, E, S, W])
         for i in range(2):
             button_frame.rowconfigure(i, weight=1)
         for i in range(3):
             button_frame.columnconfigure(i, weight=1)
-        root.mainloop()
+        self.root.mainloop()
 
 
 def save_database(db, filename):
@@ -263,3 +279,6 @@ if __name__ == '__main__':
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
+    blah = Race(cars)
+    race.simulate()
+    race.display_results('racesimulationgame')

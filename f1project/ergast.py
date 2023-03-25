@@ -94,3 +94,15 @@ class Ergast:
         table = requests.get(f"{self.url}drivers/{driver_id}/driverStandings.json")
         standings = json.loads(table.content)
         return standings['MRData']['StandingsTable']
+
+    def get_list_of_cars_for_year(self, year):
+        year = year
+        table = requests.get(f"{self.url}"+year+"/constructors.json")
+        standings = json.loads(table.content)
+        refined = standings['MRData']['ConstructorTable']['Constructors']
+        names = []
+        for data in refined:
+            names.append(data['name'])  # append the value of the 'name' key to the names list
+        return(names)
+
+    #def get_list_of_drivers_for_year(self, year):
