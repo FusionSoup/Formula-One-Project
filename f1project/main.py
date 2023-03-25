@@ -66,18 +66,19 @@ class F1Gui:
 
         # Load the image
         im = PIL.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
-        resized_image = im.resize((200, 200))
+        resized_image = im.resize((10, 10))
         img = ImageTk.PhotoImage(resized_image)
-
+        eeeee = ImageTk.getimage(img)
+        eeeee.save("test2.bmp")
         # Create a Tkinter-compatible image
         #driver_image = ImageTk.PhotoImage(name='C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
 
         # Create a label widget with the image
-        driver_image_label = Label(self.d_frame, image=img)
+        driver_image_label = Label(self.d_frame, text='bljasgadg', image=img)
        # driver_image_label.image = img
 
         # Display the label widget
-        driver_image_label.grid(row=2, column=1, sticky=[N, E, S, W])
+        driver_image_label.grid(row=2, column=1) #sticky=[N, E, S, W])
 
         # Create season frame
         self.s_frame = ttk.Frame(self.d_frame)
@@ -168,7 +169,7 @@ class F1Gui:
         if self.dsw:
             self.dsw.tkraise()
         else:
-            self.dsw = Tk()
+            self.dsw = Toplevel()
             self.dsw.title('Drivers')
             self.dsw.geometry('1000x600')
             self.dsw.bind('<Destroy>', self.driver_standings_window_destroy)
@@ -194,7 +195,7 @@ class F1Gui:
         if self.csw:
             self.csw.tkraise()
         else:
-            self.csw = Tk()
+            self.csw = Toplevel()
             self.csw.title('circuit information')
             self.csw.geometry('1000x600')
             self.csw.bind('<Destroy>', self.circuit_window_destroy)
@@ -216,7 +217,7 @@ class F1Gui:
         if self.ssw:
             self.ssw.tkraise()
         else:
-            self.ssw = Tk()
+            self.ssw = Toplevel()
             self.ssw.title('Simulation Game')
             self.ssw.geometry('1000x600')
             self.ssw.bind('<Destroy>', self.simulation_window_destroy)
