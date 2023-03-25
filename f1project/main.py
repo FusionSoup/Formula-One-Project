@@ -5,6 +5,8 @@ from tkinter import ttk
 from ergast import Ergast
 from tk_html_widgets import HTMLScrolledText
 from requests.exceptions import ConnectionError
+import PIL
+
 
 
 class F1Gui:
@@ -59,6 +61,20 @@ class F1Gui:
         dst.set_html(self.get_wikipedia_summary(driver['url'].split('/')[-1]))
         dst.configure(state='disabled')
         dst.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
+
+        # Load the image
+        im = PIL.ImageTk.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
+        img = PIL.ImageTk.PhotoImage(im)
+
+        # Create a Tkinter-compatible image
+        #driver_image = ImageTk.PhotoImage(name='C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
+
+        # Create a label widget with the image
+        driver_image_label = Label(self.d_frame, image=img)
+        driver_image_label.image = img
+
+        # Display the label widget
+        driver_image_label.grid(row=2, column=1, sticky=[N, E, S, W])
 
         # Create season frame
         self.s_frame = ttk.Frame(self.d_frame)
