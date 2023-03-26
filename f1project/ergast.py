@@ -107,13 +107,24 @@ class Ergast:
         standings = json.loads(table.content)
         return standings['MRData']['StandingsTable']
 
-    def get_list_of_cars_for_year(self, year):
+    def get_constructors_for_year(self, year):
         year = year
-        table = requests.get(f"{self.url}"+year+"/constructors.json")
+        table = requests.get(f"{self.url}{year}/constructors.json")
         standings = json.loads(table.content)
         refined = standings['MRData']['ConstructorTable']['Constructors']
         names = []
         for data in refined:
-            names.append(data['name'])  # append the value of the 'name' key to the names list
-        return(names)
+            names.append(data['constructorId'])  # append the value of the 'name' key to the names list
+        return names
 
+    def get_drivers_by_constructor(self, year, constructors):
+        year = year
+        table = []
+        for c in constructors:
+            templist = requests.get(f"{self.url}{year}/constructors/{c}/drivers.json")
+            team_year_drivers = json.loads(templist.content)
+            refined = team_year_drivers['MRData']['DriverTable']['Drivers']
+            for data in refined:
+                table.append([c, data['givenName'] +' '+ data['familyName']])
+        print(table)
+        return table

@@ -211,7 +211,8 @@ class F1Gui:
         self.ssw = None
 
     def simulation_window(self):
-        blah = Race(cars)
+        cars = get_cars('2018', self.database)
+        race = Race(cars)
         race.simulate()
         race.display_results('racesimulationgame')
         if self.ssw:
@@ -324,3 +325,4 @@ if __name__ == '__main__':
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
     database.year_list
+    database.get_drivers_by_constructor('2018', database.get_constructors_for_year('2018'))
