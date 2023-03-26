@@ -125,7 +125,6 @@ class F1Gui:
         self.c_frame.grid(row=0, column=0, sticky=[N, E, S, W])
         self.circuit_key = circuit['circuitId']
         seasons_list = self.database.get_seasons_for_circuit(self.circuit_key)
-        print(seasons_list)
         seasons_list.reverse()
         selected_season = StringVar()
         if len(seasons_list) > 0:
@@ -257,11 +256,17 @@ class F1Gui:
             return
         for slave in self.rrw_frame.grid_slaves():
             slave.destroy()
-        #year = self.database.circuit_list[selection[0]]
-        #circuit_info = HTMLScrolledText(self.csw_frame, width=70, height=15, padx=10, pady=1)
-        #circuit_info.set_html(self.get_wikipedia_summary(circuit['url'].split('/')[-1]))
-        #circuit_info.configure(state='disabled')
-        #circuit_info.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
+        year = self.database.year_list[selection[0]]
+        circuits_list = self.database.get_races_for_season(year)
+        selected_circuit = StringVar()
+        if len(circuits_list) > 0:
+            selected_circuit.set(circuits_list[0])
+            circuits_menu = ttk.OptionMenu(self.rrw_frame, selected_circuit, circuits_list[0], *circuits_list,
+                                           command=self.race_results_selection)
+            circuits_menu.grid(row=0, column=0, columnspan=4)
+
+    def race_results_selection(self, event):
+        print(event)
 
     def race_results_window_destroy(self, event):
         self.rrw = None
@@ -278,12 +283,12 @@ class F1Gui:
         # Create the main menu buttons
         style = ttk.Style()
         style.configure('TButton', padding=5, width=40)
-        exiting = ttk.Button(button_frame, text='exit', style='TButton', command=root.destroy)
+        exiting = ttk.Button(button_frame, text='Exit', style='TButton', command=root.destroy)
         driver_standings = ttk.Button(button_frame, text='Drivers',
                                       command=self.driver_standings_window)
-        race_results = ttk.Button(button_frame, text='race results', style='TButton', command=self.race_results_window)
-        constructors = ttk.Button(button_frame, text='constructors', style='TButton', command=root.destroy)
-        circuits = ttk.Button(button_frame, text='circuits', style='TButton', command=self.circuit_window)
+        race_results = ttk.Button(button_frame, text='Race Results', style='TButton', command=self.race_results_window)
+        constructors = ttk.Button(button_frame, text='Constructors', style='TButton', command=root.destroy)
+        circuits = ttk.Button(button_frame, text='Circuits', style='TButton', command=self.circuit_window)
         simulation_game = ttk.Button(button_frame, text='Simulation Game', style='TButton', command=self.simulation_window)
         # Place the buttons in the grid
         exiting.         grid(row=0, column=0, pady=2, sticky=[N, E, S, W])
@@ -320,9 +325,6 @@ if __name__ == '__main__':
     except (json.decoder.JSONDecodeError, ConnectionRefusedError, ConnectionError):
         load_database(database, 'database.bin')
 
- #   database.get_circuit_results_for_season('monza', '2010')
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
-    database.year_list
-    database.get_drivers_by_constructor('2018', database.get_constructors_for_year('2018'))

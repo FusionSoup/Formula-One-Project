@@ -41,14 +41,19 @@ class Ergast:
 
     def get_seasons_for_circuit(self, circuit_id):
         """Retrieve a list of seasons in which a circuit was used"""
-        table = requests.get(self.url + f'circuits/{circuit_id}/seasons.json')
+        table = requests.get(f'{self.url}circuits/{circuit_id}/seasons.json')
         table_content = json.loads(table.content)
-        print(table_content)
         season_table = table_content['MRData']['SeasonTable']['Seasons']
         season_list = [s['season'] for s in season_table]
-        print(season_table)
-        print(season_list)
         return season_list
+
+    def get_races_for_season(self, year):
+        """Retrieve a list of races that took place in a season"""
+        table = requests.get(f'{self.url}{year}/circuits.json')
+        table_content = json.loads(table.content)
+        race_table = table_content['MRData']['CircuitTable']['Circuits']
+        race_list = [r['circuitName'] for r in race_table]
+        return race_list
 
     def get_driver_results_for_season(self, driver_id, season):
         """Retrieve a list of (position, race name) results for a specific driver in a season"""
@@ -126,5 +131,4 @@ class Ergast:
             refined = team_year_drivers['MRData']['DriverTable']['Drivers']
             for data in refined:
                 table.append([c, data['givenName'] +' '+ data['familyName']])
-        print(table)
         return table
