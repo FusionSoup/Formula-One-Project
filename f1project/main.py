@@ -67,8 +67,9 @@ class F1Gui:
         dst.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
 
         # Load the image
-        im = PIL.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\StirlingMoss.jpg')
-
+        driver_name = driver['givenName'] + driver['familyName']
+        im = PIL.Image.open(f'C:\\Work\\Formula-One-Project\\f1project\\drivers\\{driver_name}.jpg')
+        im.resize((200, 200), PIL.Image.Resampling.BILINEAR)
         img = ImageTk.PhotoImage(im)
 
         # Create a label widget with the image
