@@ -65,7 +65,7 @@ class Ergast:
         return driver_race_results_list
 
     def get_circuit_results_for_season(self, circuit_id, season):
-        """Retrieve a list of (position, driver name) results for a specific circuit in a season"""
+        """Retrieve a list of (position, driver name, driverId) results for a specific circuit in a season"""
         table = requests.get(self.url + f'{season}/circuits/{circuit_id}/results.json')
         table_content = json.loads(table.content)
         circuit_race_results_table = table_content['MRData']['RaceTable']['Races'][0]['Results']
@@ -73,6 +73,35 @@ class Ergast:
         for r in circuit_race_results_table:
             name = r['Driver']['givenName'] + ' ' + r['Driver']['familyName']
             circuit_race_results_list.append([r['position'], name, r['Driver']['driverId']])
+        return circuit_race_results_list
+
+    def get_race_results(self, circuit_id, season):
+        """Retrieve a list of (position, driver name, constructor, fastest lap, fastest lap speed, points, grid position, status, driverId)
+         results for a specific race in a season"""
+        table = requests.get(self.url + f'{season}/circuits/{circuit_id}/results.json?limit=500')
+        try:
+            table_content = json.loads(table.content)
+        except json.decoder.JSONDecodeError:
+            print('JSON error: ', table.content)
+        circuit_race_results_table = table_content['MRData']['RaceTable']['Races'][0]['Results']
+        circuit_race_results_list = []
+        for r in circuit_race_results_table:
+            name = r['Driver']['givenName'] + ' ' + r['Driver']['familyName']
+            if r.get('FastestLap'):
+                fastest_lap_speed = r['FastestLap']['AverageSpeed']['speed'] + ' ' + r['FastestLap']['AverageSpeed']['units']
+                fastest_lap_time = r['FastestLap']['Time']['time']
+            else:
+                fastest_lap_speed = 'n/a'
+                fastest_lap_time = 'n/a'
+            circuit_race_results_list.append([r['position'],
+                                              name,
+                                              r['Constructor']['name'],
+                                              fastest_lap_time,
+                                              fastest_lap_speed,
+                                              r['points'],
+                                              r['grid'],
+                                              r['status'],
+                                              r['Driver']['driverId']])
         return circuit_race_results_list
 
     def _get_year_list(self):

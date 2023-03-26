@@ -30,6 +30,7 @@ class F1Gui:
         self.ssw = None
         self.rrw = None
         self.rrw_frame = None
+        self.year = None
 
     def driver_standings_selection(self, event):
         selection = event.widget.curselection()
@@ -68,13 +69,14 @@ class F1Gui:
 
         # Load the image
         driver_name = driver['givenName'] + driver['familyName']
-        im = PIL.Image.open(f'C:\\Work\\Formula-One-Project\\f1project\\drivers\\{driver_name}.jpg')
-        im.resize((200, 200), PIL.Image.Resampling.BILINEAR)
-        img = ImageTk.PhotoImage(im)
-
+        try:
+            im = PIL.Image.open(f'C:\\Work\\Formula-One-Project\\f1project\\drivers\\{driver_name}.jpg')
+            im.resize((200, 200), PIL.Image.Resampling.BILINEAR)
+            img = ImageTk.PhotoImage(im)
+        except FileNotFoundError:
+            img = None
         # Create a label widget with the image
-        driver_image_label = Label(self.d_frame, image=img)
-
+        driver_image_label = Label(self.d_frame, image=img, text='No image')
         # Display the label widget
         driver_image_label.grid(row=2, column=1, sticky=[N, E, S, W])
 
@@ -100,11 +102,11 @@ class F1Gui:
         for i in range(len(results)):
             print(results[i])
             for j in range(len(results[i]) - 1):
-                label = ttk.Label(self.s_frame, text=results[i][j], name=results[i][-1] + str(j))
+                label = ttk.Label(self.s_frame, text=results[i][j])
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
                 label.bind('<Button-1>',
-                           lambda evt, year=selection, circuit=results[i][2]: self.driver_race_click(evt, year, circuit))
+                           lambda evt, year=selection, circuit=results[i][-1]: self.driver_race_click(evt, year, circuit))
 
     def driver_race_click(self, evt, year, circuit_id):
         print(year, circuit_id)
@@ -129,10 +131,10 @@ class F1Gui:
         seasons_list.reverse()
         selected_season = StringVar()
         if len(seasons_list) > 0:
-            selected_season.set(seasons_list[0])
             seasons_menu = ttk.OptionMenu(self.csw_frame, selected_season, seasons_list[0], *seasons_list,
                                           command=self.circuit_season_selection)
             seasons_menu.grid(row=0, column=0, columnspan=4)
+            selected_season.set(seasons_list[0])
 
     def circuit_season_selection(self, selection):
         for s in self.c_frame.grid_slaves():
@@ -140,8 +142,7 @@ class F1Gui:
                 s.destroy()
         results = self.database.get_circuit_results_for_season(self.circuit_key, selection)
         for i in range(len(results)):
-            print(results[i])
-            for j in range(len(results[i]) - 1):
+            for j in range(2):
                 label = ttk.Label(self.c_frame, text=results[i][j], name=results[i][-1] + str(j))
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
@@ -162,7 +163,7 @@ class F1Gui:
     def driver_standings_window_destroy(self, event):
         self.dsw = None
 
-    def driver_standings_window(self):
+    def driver_standings_window(self, selected_driver=None):
         if self.dsw:
             self.dsw.tkraise()
         else:
@@ -184,6 +185,10 @@ class F1Gui:
                 self.d_frame.columnconfigure(j, weight=1)
             for d in database.driver_list:
                 driver_listbox.insert('end', d['givenName'] + ' ' + d['familyName'])
+            for i in range(len(self.database.driver_list)):
+                if selected_driver == self.database.driver_list[i]['driverId']:
+                    driver_listbox.select_set([i])
+                    driver_listbox.event_generate('<<ListboxSelect>>')
 
     def circuit_window_destroy(self, event):
         self.csw = None
@@ -257,8 +262,8 @@ class F1Gui:
             return
         for slave in self.rrw_frame.grid_slaves():
             slave.destroy()
-        year = self.database.year_list[selection[0]]
-        circuits_list = self.database.get_races_for_season(year)
+        self.year = self.database.year_list[selection[0]]
+        circuits_list = self.database.get_races_for_season(self.year)
         selected_circuit = StringVar()
         if len(circuits_list) > 0:
             selected_circuit.set(circuits_list[0])
@@ -266,8 +271,36 @@ class F1Gui:
                                            command=self.race_results_selection)
             circuits_menu.grid(row=0, column=0, columnspan=4)
 
-    def race_results_selection(self, event):
-        print(event)
+    def race_results_selection(self, selection):
+        for s in self.rrw_frame.grid_slaves():
+            if s.grid_info()['row'] > 0:
+                s.destroy()
+        circuit_id = ''
+        for c in self.database.circuit_list:
+            if c['circuitName'] == selection:
+                circuit_id = c['circuitId']
+                break
+        ttk.Label(self.rrw_frame, text='Position')    .grid(column=0, row=1)
+        ttk.Label(self.rrw_frame, text='Driver')      .grid(column=1, row=1)
+        ttk.Label(self.rrw_frame, text='Constructor') .grid(column=2, row=1)
+        ttk.Label(self.rrw_frame, text='Fastest lap') .grid(column=3, row=1)
+        ttk.Label(self.rrw_frame, text='FL Avg Speed').grid(column=4, row=1)
+        ttk.Label(self.rrw_frame, text='Points')      .grid(column=5, row=1)
+        ttk.Label(self.rrw_frame, text='Grid')        .grid(column=6, row=1)
+        ttk.Label(self.rrw_frame, text='Status')      .grid(column=7, row=1)
+        results = self.database.get_race_results(circuit_id, self.year)
+        for i in range(len(results)):
+            for j in range(len(results[i]) - 1):
+                label = ttk.Label(self.rrw_frame, text=results[i][j])
+                label.grid(column=j, row=i + 2)
+                # Clicking on the driver takes the user to that window
+                if j == 1:
+                    label.bind('<Button-1>',
+                               lambda evt, driver=results[i][-1]: self.race_driver_click(evt, driver))
+                    # TODO: Set label to blue and underlined
+
+    def race_driver_click(self, evt, driver_id):
+        self.driver_standings_window(selected_driver=driver_id)
 
     def race_results_window_destroy(self, event):
         self.rrw = None
