@@ -28,6 +28,8 @@ class F1Gui:
         self.c_frame = None
         self.circuit_key = None
         self.ssw = None
+        self.rrw = None
+        self.rrw_frame = None
 
     def driver_standings_selection(self, event):
         selection = event.widget.curselection()
@@ -65,20 +67,15 @@ class F1Gui:
         dst.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
 
         # Load the image
-        im = PIL.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
-        resized_image = im.resize((10, 10))
-        img = ImageTk.PhotoImage(resized_image)
-        eeeee = ImageTk.getimage(img)
-        eeeee.save("test2.bmp")
-        # Create a Tkinter-compatible image
-        #driver_image = ImageTk.PhotoImage(name='C:\\Work\\Formula-One-Project\\f1project\\drivers\\FernandoAlonso.jpg')
+        im = PIL.Image.open('C:\\Work\\Formula-One-Project\\f1project\\drivers\\StirlingMoss.jpg')
+
+        img = ImageTk.PhotoImage(im)
 
         # Create a label widget with the image
-        driver_image_label = Label(self.d_frame, text='bljasgadg', image=img)
-       # driver_image_label.image = img
+        driver_image_label = Label(self.d_frame, image=img)
 
         # Display the label widget
-        driver_image_label.grid(row=2, column=1) #sticky=[N, E, S, W])
+        driver_image_label.grid(row=2, column=1, sticky=[N, E, S, W])
 
         # Create season frame
         self.s_frame = ttk.Frame(self.d_frame)
@@ -171,7 +168,7 @@ class F1Gui:
         else:
             self.dsw = Toplevel()
             self.dsw.title('Drivers')
-            self.dsw.geometry('1000x600')
+            self.dsw.geometry('1700x900')
             self.dsw.bind('<Destroy>', self.driver_standings_window_destroy)
             driver_listbox = Listbox(self.dsw, width=30)
             driver_listbox.bind('<<ListboxSelect>>', self.driver_standings_selection)
@@ -214,13 +211,59 @@ class F1Gui:
         self.ssw = None
 
     def simulation_window(self):
+        blah = Race(cars)
+        race.simulate()
+        race.display_results('racesimulationgame')
         if self.ssw:
             self.ssw.tkraise()
         else:
             self.ssw = Toplevel()
             self.ssw.title('Simulation Game')
-            self.ssw.geometry('1000x600')
+            self.ssw.geometry('1700x1000')
             self.ssw.bind('<Destroy>', self.simulation_window_destroy)
+        # Add a Text widget to display the contents of the text file
+        text_widget = Text(self.ssw)
+        text_widget.pack(fill=BOTH, expand=YES)
+
+        # Open the text file and read its contents into the Text widget
+        with open('racesimulationgame', 'r') as f:
+            contents = f.read()
+            text_widget.insert(END, contents)
+
+    def race_results_window(self):
+        if self.rrw:
+            self.rrw.tkraise()
+        else:
+            self.rrw = Toplevel()
+            self.rrw.title('race results')
+            self.rrw.geometry('1000x600')
+            self.rrw.bind('<Destroy>', self.race_results_window_destroy)
+            years_listbox = Listbox(self.rrw, width=30)
+            years_listbox.bind('<<ListboxSelect>>', self.year_selection)
+            scroller = Scrollbar(self.rrw, command=years_listbox.yview)
+            years_listbox.config(yscrollcommand=scroller.set)
+            scroller.pack(side=LEFT, fill=Y)
+            years_listbox.pack(side=LEFT, fill=Y)
+            self.rrw_frame = ttk.Frame(self.rrw)
+            self.rrw_frame.pack(side='top', fill=NONE, expand=True)
+            years = self.database.year_list
+            for c in years:
+                years_listbox.insert(END, c)
+
+    def year_selection(self, event):
+        selection = event.widget.curselection()
+        if len(selection) != 1:
+            return
+        for slave in self.rrw_frame.grid_slaves():
+            slave.destroy()
+        #year = self.database.circuit_list[selection[0]]
+        #circuit_info = HTMLScrolledText(self.csw_frame, width=70, height=15, padx=10, pady=1)
+        #circuit_info.set_html(self.get_wikipedia_summary(circuit['url'].split('/')[-1]))
+        #circuit_info.configure(state='disabled')
+        #circuit_info.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
+
+    def race_results_window_destroy(self, event):
+        self.rrw = None
 
     def main_window(self):
         """Create the main menu"""
@@ -237,7 +280,7 @@ class F1Gui:
         exiting = ttk.Button(button_frame, text='exit', style='TButton', command=root.destroy)
         driver_standings = ttk.Button(button_frame, text='Drivers',
                                       command=self.driver_standings_window)
-        race_results = ttk.Button(button_frame, text='race results', style='TButton', command=root.destroy)
+        race_results = ttk.Button(button_frame, text='race results', style='TButton', command=self.race_results_window)
         constructors = ttk.Button(button_frame, text='constructors', style='TButton', command=root.destroy)
         circuits = ttk.Button(button_frame, text='circuits', style='TButton', command=self.circuit_window)
         simulation_game = ttk.Button(button_frame, text='Simulation Game', style='TButton', command=self.simulation_window)
@@ -276,10 +319,8 @@ if __name__ == '__main__':
     except (json.decoder.JSONDecodeError, ConnectionRefusedError, ConnectionError):
         load_database(database, 'database.bin')
 
-    database.get_circuit_results_for_season('monza', '2010')
+ #   database.get_circuit_results_for_season('monza', '2010')
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
-    blah = Race(cars)
-    race.simulate()
-    race.display_results('racesimulationgame')
+    database.year_list

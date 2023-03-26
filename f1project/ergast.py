@@ -9,12 +9,14 @@ class Ergast:
         """Create the instance, but don't populate the data tables yet"""
         self.driver_list = None
         self.circuit_list = None
+        self.year_list = None
         self.url = "http://ergast.com/api/f1/"
 
     def get_data(self):
         """Get the data tables from the online database"""
         self._get_driver_list()
         self._get_circuit_list()
+        self._get_year_list()
 
     def _get_driver_list(self):
         """Retrieve a list with one entry per driver"""
@@ -68,6 +70,14 @@ class Ergast:
             circuit_race_results_list.append([r['position'], name, r['Driver']['driverId']])
         return circuit_race_results_list
 
+    def _get_year_list(self):
+        """Retrieve a list of years"""
+        table = requests.get(f"{self.url}seasons.json?limit=100")
+        standings = json.loads(table.content)
+        refined = standings['MRData']['SeasonTable']['Seasons']
+        self.year_list = []
+        for data in refined:
+            self.year_list.append(data['season'])  # append the value of the 'season' key to the years list
 
     def _get_circuit_list(self):
         """Retrieve a list with one entry per circuit"""
@@ -82,6 +92,7 @@ class Ergast:
         with open(filename, 'wb') as f:
             pickle.dump(self.driver_list, f)
             pickle.dump(self.circuit_list, f)
+            pickle.dump(self.year_list, f)
 
     def load_from_file(self, filename):
         """Load the whole database from a local file"""
@@ -89,6 +100,7 @@ class Ergast:
         with open(filename, 'rb') as f:
             self.driver_list = pickle.load(f)
             self.circuit_list = pickle.load(f)
+            self.year_list = pickle.load(f)
 
     def get_driver_standings(self, driver_id):
         table = requests.get(f"{self.url}drivers/{driver_id}/driverStandings.json")
@@ -105,4 +117,3 @@ class Ergast:
             names.append(data['name'])  # append the value of the 'name' key to the names list
         return(names)
 
-    #def get_list_of_drivers_for_year(self, year):

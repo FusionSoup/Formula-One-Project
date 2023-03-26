@@ -3,7 +3,7 @@ import random
 # Define constants
 import ergast
 
-NUM_LAPS = 10
+NUM_LAPS = 11
 TRACK_DISTANCE = 5.5
 
 
@@ -99,5 +99,5 @@ cars = [car1, car2, car3, car4, car5, car6, car7, car8, car9, car10]
 race = Race(cars)
 
 # Run the simulation and display the results
-race.simulate()
-race.display_results('racesimulationgame')
+#race.simulate()
+#race.display_results('racesimulationgame')
