@@ -31,6 +31,8 @@ class F1Gui:
         self.rrw = None
         self.rrw_frame = None
         self.year = None
+        self.cw = None
+        self.cw_frame = None
 
     def driver_standings_selection(self, event):
         selection = event.widget.curselection()
@@ -304,6 +306,66 @@ class F1Gui:
 
     def race_results_window_destroy(self, event):
         self.rrw = None
+
+    def constructors_window(self):
+        if self.cw:
+            self.cw.tkraise()
+        else:
+            self.cw = Toplevel()
+            self.cw.title('circuit information')
+            self.cw.geometry('1000x600')
+            self.cw.bind('<Destroy>', self.constructors_window_destroy)
+            circuit_listbox = Listbox(self.cw, width=30)
+            circuit_listbox.bind('<<ListboxSelect>>', self.circuit_selection)
+            my_scroll2 = Scrollbar(self.cw, command=circuit_listbox.yview)
+            circuit_listbox.config(yscrollcommand=my_scroll2.set)
+            my_scroll2.pack(side=LEFT, fill=Y)
+            circuit_listbox.pack(side=LEFT, fill=Y)
+            self.cw_frame = ttk.Frame(self.cw)
+            self.cw_frame.pack(side='top', fill=NONE, expand=True)
+            for c in self.database.circuit_list:
+                circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
+
+    def constructors_window_destroy(self, event):
+        self.cw = None
+
+    def constructors_selection(self, event):
+        selection = event.widget.curselection()
+        if len(selection) != 1:
+            return
+        for slave in self.cw_frame.grid_slaves():
+            slave.destroy()
+        constructor = self.database.constructor_list[selection[0]]
+        constructor_info = HTMLScrolledText(self.cw_frame, width=70, height=15, padx=10, pady=1)
+        constructor_info.set_html(self.get_wikipedia_summary(constructor['url'].split('/')[-1]))
+        constructor_info.configure(state='disabled')
+        constructor_info.grid(row=1, column=0, rowspan=2, sticky=[N, E, S, W])
+
+        # Create circuit season frame
+        self.ct_frame = ttk.Frame(self.cw_frame)
+        self.ct_frame.grid(row=0, column=0, sticky=[N, E, S, W])
+        self.constructor_key = constructor['constructorId']
+        seasons_list = self.database.get_seasons_for_constructor(self.constructor_key)
+        seasons_list.reverse()
+        selected_season = StringVar()
+        if len(seasons_list) > 0:
+            seasons_menu = ttk.OptionMenu(self.cw_frame, selected_season, seasons_list[0], *seasons_list,
+                                          command=self.constructor_season_selection)
+            seasons_menu.grid(row=0, column=0, columnspan=4)
+            selected_season.set(seasons_list[0])
+
+    def constructor_season_selection(self, selection):
+        for s in self.ct_frame.grid_slaves():
+            if s.grid_info()['row'] > 0:
+                s.destroy()
+        results = self.database.get_constructor_results_for_season(self.constructor_key, selection)
+        for i in range(len(results)):
+            for j in range(2):
+                label = ttk.Label(self.ct_frame, text=results[i][j], name=results[i][-1] + str(j))
+                label.grid(column=j, row=i + 1)
+                # Clicking on this row takes the user to that race
+                label.bind('<Button-1>',
+                           lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(evt, year, driver))
 
     def main_window(self):
         """Create the main menu"""
