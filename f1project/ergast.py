@@ -170,9 +170,19 @@ class Ergast:
         driver_id = driver_id
         table = requests.get(f"{self.url}{year}/{roundss}/drivers/{driver_id}/laps.json?limit=150")
         standings = json.loads(table.content)
-        print(standings)
-        #refined = standings['MRData']['SeasonTable']['Seasons']
-        #self.year_list = []
-        #for data in refined:
-        #    self.year_list.append(data['season'])  # append the value of the 'season' key to the years list
+        #print(standings)
+        refined = standings['MRData']['RaceTable']['Races'][0]['Laps']
+        #print(refined)
+        self.lap_list = []
+        for data in refined:
+            self.lap_list.append(data['Timings'][0])  # append the value of the 'season' key to the years list
 
+        print(self.lap_list)
+        temporarylist = self.lap_list
+        final_lap_list =[]
+        for i in range(len(temporarylist)):
+            final_lap_list.append(i[temporarylist][2])
+
+        print(final_lap_list)
+
+        #TODO: SO CLOSE JUST NEED HELP
