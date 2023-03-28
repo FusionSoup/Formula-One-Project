@@ -174,7 +174,8 @@ class Ergast:
         refined = standings['MRData']['RaceTable']['Races'][0]['Laps']
         #print(refined)
         self.lap_list = []
+        self.times = []
         for data in refined:
             self.lap_list.append(data['Timings'][0])  # append the value of the 'season' key to the years list
-        times = [d['time'] for d in self.lap_list]
-        print(times)
+        self.times = [d['time'] for d in self.lap_list]
+        return(self.times)

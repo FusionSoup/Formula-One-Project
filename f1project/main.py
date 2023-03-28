@@ -9,6 +9,8 @@ from PIL import ImageTk
 import PIL
 from simulation import *
 import matplotlib.pyplot as plt
+import math
+
 
 
 class F1Gui:
@@ -308,17 +310,39 @@ class F1Gui:
     def race_results_window_destroy(self, event):
         self.rrw = None
 
+    def convert_to_float(self, lap_time_str):
+        minutes, seconds = lap_time_str.split(":")
+        seconds, millis = seconds.split(".")
+        return float(minutes) * 60 + float(seconds) + float(millis) / 1000
+
+    #TODO: convert string values recieved from get_list_of_lap_times
+
+    def convert_to_int(self, fllap):
+        fllap = fllap
+        int_max = round(float(max(fllap)), -1)
+        return int_max
+
     def plot_lap_times(self, lap_time_list):
         """ Plots a list of laptimes on a graph using Matplotlib."""
 
+        # Convert lap time list to minutes
+        lap_time_list = lap_time_list
+
+        # Get the maximum lap time in minutes
+        max_lap_time = self.convert_to_float(max(lap_time_list))
+
         # Set x values as indices of the numbers_list
-        x_values = range(len(lap_time_list))
+        x_values = range(len((lap_time_list)))
 
         # Create a new figure and axis
         fig, ax = plt.subplots()
 
         # Plot the numbers as a line graph
         ax.plot(x_values, lap_time_list)
+
+        # Set the y-tick values to be between 0 and the max lap time
+        y_ticks = range(0, math.ceil(max_lap_time), 1)
+        ax.set_yticks(y_ticks)
 
         # Show the plot
         plt.show()
@@ -440,4 +464,6 @@ if __name__ == '__main__':
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
-    database.get_list_of_laptimes('2020', 'hamilton', 'silverstone')
+    varus = database.get_list_of_laptimes('2020', 'hamilton', 'silverstone')
+    f1Gui.plot_lap_times(varus)
+
