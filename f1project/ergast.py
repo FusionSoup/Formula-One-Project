@@ -176,13 +176,5 @@ class Ergast:
         self.lap_list = []
         for data in refined:
             self.lap_list.append(data['Timings'][0])  # append the value of the 'season' key to the years list
-
-        print(self.lap_list)
-        temporarylist = self.lap_list
-        final_lap_list =[]
-        for i in range(len(temporarylist)):
-            final_lap_list.append(i[temporarylist][2])
-
-        print(final_lap_list)
-
-        #TODO: SO CLOSE JUST NEED HELP
+        times = [d['time'] for d in self.lap_list]
+        print(times)
