@@ -161,3 +161,18 @@ class Ergast:
             for data in refined:
                 table.append([c, data['givenName'] +' '+ data['familyName']])
         return table
+
+    def get_list_of_laptimes(self, year, driver_id, circuit_id):
+        """Retrieve a list of lap times for a driver in a given race"""
+        #TODO round = circuit_id to round
+        roundss = '5'
+        year = year
+        driver_id = driver_id
+        table = requests.get(f"{self.url}{year}/{roundss}/drivers/{driver_id}/laps.json?limit=150")
+        standings = json.loads(table.content)
+        print(standings)
+        #refined = standings['MRData']['SeasonTable']['Seasons']
+        #self.year_list = []
+        #for data in refined:
+        #    self.year_list.append(data['season'])  # append the value of the 'season' key to the years list
+

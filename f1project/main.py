@@ -8,6 +8,7 @@ from requests.exceptions import ConnectionError
 from PIL import ImageTk
 import PIL
 from simulation import *
+import matplotlib.pyplot as plt
 
 
 class F1Gui:
@@ -307,6 +308,21 @@ class F1Gui:
     def race_results_window_destroy(self, event):
         self.rrw = None
 
+    def plot_lap_times(self, lap_time_list):
+        """ Plots a list of laptimes on a graph using Matplotlib."""
+
+        # Set x values as indices of the numbers_list
+        x_values = range(len(lap_time_list))
+
+        # Create a new figure and axis
+        fig, ax = plt.subplots()
+
+        # Plot the numbers as a line graph
+        ax.plot(x_values, lap_time_list)
+
+        # Show the plot
+        plt.show()
+
     def constructors_window(self):
         if self.cw:
             self.cw.tkraise()
@@ -424,3 +440,4 @@ if __name__ == '__main__':
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
+    database.get_list_of_laptimes('2020', 'hamilton', 'silverstone')
