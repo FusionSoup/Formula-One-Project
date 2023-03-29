@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import math
 
 
-
 class F1Gui:
     def __init__(self, _root, _database):
         self.root = _root
@@ -302,7 +301,12 @@ class F1Gui:
                 if j == 1:
                     label.bind('<Button-1>',
                                lambda evt, driver=results[i][-1]: self.race_driver_click(evt, driver))
-                    # TODO: Set label to blue and underlined
+                if j == 3:
+                    label.bind('<Button-1>',
+                               lambda evt, driver_id=results[i][-1], driver_name=results[i][1], circuit_id=circuit_id,
+                               circuit_name=selection, year=self.year:
+                               self.plot_lap_times(driver_id, driver_name, circuit_id, circuit_name, year))
+                    # TODO: Set labels to blue and underlined
 
     def race_driver_click(self, evt, driver_id):
         self.driver_standings_window(selected_driver=driver_id)
@@ -310,29 +314,31 @@ class F1Gui:
     def race_results_window_destroy(self, event):
         self.rrw = None
 
-    def convert_to_float(self, lap_time_str):
+    @staticmethod
+    def convert_to_float(lap_time_str):
         minutes, seconds = lap_time_str.split(":")
         seconds, millis = seconds.split(".")
         return float(minutes) * 60 + float(seconds) + float(millis) / 1000
-
-    #TODO: convert string values recieved from get_list_of_lap_times
 
     def convert_to_int(self, fllap):
         fllap = fllap
         int_max = round(float(max(fllap)), -1)
         return int_max
 
-    def plot_lap_times(self, lap_time_list):
-        """ Plots a list of laptimes on a graph using Matplotlib."""
+    def plot_lap_times(self, driver_id, driver_name, circuit_id, circuit_name, year):
+        """ Plots a list of lap times on a graph using Matplotlib."""
+        lap_time_list = database.get_list_of_lap_times(year, driver_id, circuit_id)
 
-        # Convert lap time list to minutes
-        lap_time_list = lap_time_list
+        # Convert lap time list to seconds
+        for i in range(len(lap_time_list)):
+            lap_time_list[i] = self.convert_to_float(lap_time_list[i])
 
-        # Get the maximum lap time in minutes
-        max_lap_time = self.convert_to_float(max(lap_time_list))
+        # Get the maximum and minimum lap times
+        max_lap_time = max(lap_time_list)
+        min_lap_time = min(lap_time_list)
 
         # Set x values as indices of the numbers_list
-        x_values = range(len((lap_time_list)))
+        x_values = range(len(lap_time_list))
 
         # Create a new figure and axis
         fig, ax = plt.subplots()
@@ -340,9 +346,14 @@ class F1Gui:
         # Plot the numbers as a line graph
         ax.plot(x_values, lap_time_list)
 
-        # Set the y-tick values to be between 0 and the max lap time
-        y_ticks = range(0, math.ceil(max_lap_time), 1)
-        ax.set_yticks(y_ticks)
+        # Set the y-tick values to be 5-second intervals from min to max lap time
+        first_y_tick = int(5 * math.floor(min_lap_time / 5))
+        last_y_tick = int(5 * math.ceil(max_lap_time / 5))
+        ax.set_yticks(range(first_y_tick, last_y_tick, 5))
+
+        ax.set_xlabel('Lap number')
+        ax.set_ylabel('Lap time (seconds)')
+        ax.set_title(f'{driver_name}, {circuit_name}, {year}')
 
         # Show the plot
         plt.show()
@@ -464,6 +475,4 @@ if __name__ == '__main__':
     root = Tk()
     f1Gui = F1Gui(root, database)
     f1Gui.main_window()
-    varus = database.get_list_of_laptimes('2020', 'hamilton', 'silverstone')
-    f1Gui.plot_lap_times(varus)
 

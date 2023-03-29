@@ -55,6 +55,16 @@ class Ergast:
         race_list = [r['circuitName'] for r in race_table]
         return race_list
 
+    def get_round_for_circuit_in_year(self, year, circuit_id):
+        round_no = 0
+        table = requests.get(f'{self.url}{year}.json')
+        table_content = json.loads(table.content)
+        race_table = table_content['MRData']['RaceTable']['Races']
+        for r in race_table:
+            if r['Circuit']['circuitId'] == circuit_id:
+                round_no = r['round']
+        return round_no
+
     def get_driver_results_for_season(self, driver_id, season):
         """Retrieve a list of (position, race name) results for a specific driver in a season"""
         # http://ergast.com/api/f1/2008/drivers/alonso/results
@@ -162,20 +172,14 @@ class Ergast:
                 table.append([c, data['givenName'] +' '+ data['familyName']])
         return table
 
-    def get_list_of_laptimes(self, year, driver_id, circuit_id):
+    def get_list_of_lap_times(self, year, driver_id, circuit_id):
         """Retrieve a list of lap times for a driver in a given race"""
-        #TODO round = circuit_id to round
-        roundss = '5'
-        year = year
-        driver_id = driver_id
-        table = requests.get(f"{self.url}{year}/{roundss}/drivers/{driver_id}/laps.json?limit=150")
+        round_no = self.get_round_for_circuit_in_year(year, circuit_id)
+        table = requests.get(f"{self.url}{year}/{round_no}/drivers/{driver_id}/laps.json?limit=150")
         standings = json.loads(table.content)
-        #print(standings)
         refined = standings['MRData']['RaceTable']['Races'][0]['Laps']
-        #print(refined)
-        self.lap_list = []
-        self.times = []
+        lap_list = []
         for data in refined:
-            self.lap_list.append(data['Timings'][0])  # append the value of the 'season' key to the years list
-        self.times = [d['time'] for d in self.lap_list]
-        return(self.times)
+            lap_list.append(data['Timings'][0])  # append the value of the 'season' key to the years list
+        times = [d['time'] for d in lap_list]
+        return times
