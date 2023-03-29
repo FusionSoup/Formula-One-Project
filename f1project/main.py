@@ -37,6 +37,7 @@ class F1Gui:
         self.cw_frame = None
 
     def driver_standings_selection(self, event):
+        """Add widgets to screen once a driver has been selected"""
         selection = event.widget.curselection()
         if len(selection) != 1:
             return

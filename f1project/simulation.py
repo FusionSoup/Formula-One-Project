@@ -14,7 +14,7 @@ class Driver:
         self.lap_times = []
 
     def set_lap_time(self):
-        self.lap_times.append(round(random.uniform(60, 75), 2))
+        self.lap_times.append(round(random.normalvariate(80, 1), 2))
 
 
 class Car:
