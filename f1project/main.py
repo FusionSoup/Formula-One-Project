@@ -30,6 +30,7 @@ class F1Gui:
         self.c_frame = None
         self.circuit_key = None
         self.ssw = None
+        self.ssw_frame = None
         self.rrw = None
         self.rrw_frame = None
         self.year = None
@@ -229,10 +230,6 @@ class F1Gui:
         self.ssw = None
 
     def simulation_window(self):
-        cars = get_cars('2018', self.database)
-        race = Race(cars)
-        race.simulate()
-        race.display_results('racesimulationgame')
         if self.ssw:
             self.ssw.tkraise()
         else:
@@ -240,9 +237,34 @@ class F1Gui:
             self.ssw.title('Simulation Game')
             self.ssw.geometry('1700x1000')
             self.ssw.bind('<Destroy>', self.simulation_window_destroy)
+        years_listbox = Listbox(self.ssw, width=30)
+        years_listbox.bind('<<ListboxSelect>>', self.simulation_run)
+        scroller = Scrollbar(self.ssw, command=years_listbox.yview)
+        years_listbox.config(yscrollcommand=scroller.set)
+        scroller.pack(side=LEFT, fill=Y)
+        years_listbox.pack(side=LEFT, fill=Y)
+        self.ssw_frame = ttk.LabelFrame(self.ssw, text='Simulation')
+        self.ssw_frame.pack(side=RIGHT, fill='both')
+        years = self.database.year_list
+        for c in years:
+            years_listbox.insert(END, c)
+
+    def simulation_run(self, event):
+        selection = event.widget.curselection()
+        if len(selection) != 1:
+            return
+        # Clear ssw_frame
+        for s in self.ssw_frame.grid_slaves():
+            s.destroy()
+        cars = get_cars(self.database.year_list[selection[0]], self.database)
+        race = Race(cars)
+        race.simulate()
+        race.display_results('racesimulationgame')
         # Add a Text widget to display the contents of the text file
-        text_widget = Text(self.ssw)
-        text_widget.pack(fill=BOTH, expand=YES)
+        text_widget = Text(self.ssw_frame, width=1000, height=60)
+        text_widget.columnconfigure(0, weight=1)
+        text_widget.rowconfigure(0, weight=1)
+        text_widget.grid(row=0, column=0, rowspan=2, columnspan=2, sticky=[N, E, S, W])
 
         # Open the text file and read its contents into the Text widget
         with open('racesimulationgame', 'r') as f:
