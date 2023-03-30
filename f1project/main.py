@@ -35,6 +35,8 @@ class F1Gui:
         self.year = None
         self.cw = None
         self.cw_frame = None
+        self.ct_frame = None
+        self.constructor_key = None
 
     def driver_standings_selection(self, event):
         """Add widgets to screen once a driver has been selected"""
@@ -105,16 +107,18 @@ class F1Gui:
                 s.destroy()
         results = self.database.get_driver_results_for_season(self.driver_key, selection)
         for i in range(len(results)):
-            print(results[i])
             for j in range(len(results[i]) - 1):
                 label = ttk.Label(self.s_frame, text=results[i][j])
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
                 label.bind('<Button-1>',
-                           lambda evt, year=selection, circuit=results[i][-1]: self.driver_race_click(evt, year, circuit))
+                           lambda evt, year=selection, circuit=results[i][-1]: self.circuit_click(year, circuit))
 
-    def driver_race_click(self, evt, year, circuit_id):
-        print(year, circuit_id)
+    def race_click(self, year, circuit_id):
+        self.race_results_window(selected_year=year)
+
+    def circuit_click(self, year, circuit_id):
+        self.circuit_window(selected_circuit=circuit_id)
 
     def circuit_selection(self, event):
         selection = event.widget.curselection()
@@ -155,7 +159,7 @@ class F1Gui:
                            lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(evt, year, driver))
 
     def circuit_driver_click(self, evt, year, driver_id):
-        print(year, driver_id)
+        self.driver_standings_window(selected_driver=driver_id)
 
     def get_wikipedia_summary(self, page):
         try:
@@ -198,7 +202,7 @@ class F1Gui:
     def circuit_window_destroy(self, event):
         self.csw = None
 
-    def circuit_window(self):
+    def circuit_window(self, selected_circuit=None):
         if self.csw:
             self.csw.tkraise()
         else:
@@ -216,6 +220,10 @@ class F1Gui:
             self.csw_frame.pack(side='top', fill=NONE, expand=True)
             for c in self.database.circuit_list:
                 circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
+            for i in range(len(self.database.circuit_list)):
+                if selected_circuit == self.database.circuit_list[i]['circuitId']:
+                    circuit_listbox.select_set([i])
+                    circuit_listbox.event_generate('<<ListboxSelect>>')
 
     def simulation_window_destroy(self, event):
         self.ssw = None
@@ -241,7 +249,7 @@ class F1Gui:
             contents = f.read()
             text_widget.insert(END, contents)
 
-    def race_results_window(self):
+    def race_results_window(self, selected_year=None):
         if self.rrw:
             self.rrw.tkraise()
         else:
@@ -260,6 +268,10 @@ class F1Gui:
             years = self.database.year_list
             for c in years:
                 years_listbox.insert(END, c)
+            for i in range(len(self.database.year_list)):
+                if selected_year == self.database.year_list[i]:
+                    years_listbox.select_set([i])
+                    years_listbox.event_generate('<<ListboxSelect>>')
 
     def year_selection(self, event):
         selection = event.widget.curselection()
@@ -364,19 +376,19 @@ class F1Gui:
             self.cw.tkraise()
         else:
             self.cw = Toplevel()
-            self.cw.title('circuit information')
+            self.cw.title('Constructor information')
             self.cw.geometry('1000x600')
             self.cw.bind('<Destroy>', self.constructors_window_destroy)
-            circuit_listbox = Listbox(self.cw, width=30)
-            circuit_listbox.bind('<<ListboxSelect>>', self.circuit_selection)
-            my_scroll2 = Scrollbar(self.cw, command=circuit_listbox.yview)
-            circuit_listbox.config(yscrollcommand=my_scroll2.set)
+            constructors_listbox = Listbox(self.cw, width=30)
+            constructors_listbox.bind('<<ListboxSelect>>', self.constructors_selection)
+            my_scroll2 = Scrollbar(self.cw, command=constructors_listbox.yview)
+            constructors_listbox.config(yscrollcommand=my_scroll2.set)
             my_scroll2.pack(side=LEFT, fill=Y)
-            circuit_listbox.pack(side=LEFT, fill=Y)
+            constructors_listbox.pack(side=LEFT, fill=Y)
             self.cw_frame = ttk.Frame(self.cw)
             self.cw_frame.pack(side='top', fill=NONE, expand=True)
-            for c in self.database.circuit_list:
-                circuit_listbox.insert('end', c['circuitName'] + ', ' + c['Location']['country'])
+            for c in self.database.constructor_list:
+                constructors_listbox.insert('end', f"{c['name']} ({c['nationality']})")
 
     def constructors_window_destroy(self, event):
         self.cw = None
@@ -397,13 +409,14 @@ class F1Gui:
         self.ct_frame = ttk.Frame(self.cw_frame)
         self.ct_frame.grid(row=0, column=0, sticky=[N, E, S, W])
         self.constructor_key = constructor['constructorId']
+
         seasons_list = self.database.get_seasons_for_constructor(self.constructor_key)
         seasons_list.reverse()
         selected_season = StringVar()
         if len(seasons_list) > 0:
-            seasons_menu = ttk.OptionMenu(self.cw_frame, selected_season, seasons_list[0], *seasons_list,
+            seasons_menu = ttk.OptionMenu(self.ct_frame, selected_season, seasons_list[0], *seasons_list,
                                           command=self.constructor_season_selection)
-            seasons_menu.grid(row=0, column=0, columnspan=4)
+            seasons_menu.grid(row=0, column=0, columnspan=5)
             selected_season.set(seasons_list[0])
 
     def constructor_season_selection(self, selection):
@@ -412,12 +425,12 @@ class F1Gui:
                 s.destroy()
         results = self.database.get_constructor_results_for_season(self.constructor_key, selection)
         for i in range(len(results)):
-            for j in range(2):
-                label = ttk.Label(self.ct_frame, text=results[i][j], name=results[i][-1] + str(j))
+            for j in range(5):
+                label = ttk.Label(self.ct_frame, text=results[i][j])
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
                 label.bind('<Button-1>',
-                           lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(evt, year, driver))
+                           lambda evt, year=selection, circuit=results[i][5]: self.race_click(evt, year, circuit))
 
     def main_window(self):
         """Create the main menu"""
@@ -435,7 +448,7 @@ class F1Gui:
         driver_standings = ttk.Button(button_frame, text='Drivers',
                                       command=self.driver_standings_window)
         race_results = ttk.Button(button_frame, text='Race Results', style='TButton', command=self.race_results_window)
-        constructors = ttk.Button(button_frame, text='Constructors', style='TButton', command=root.destroy)
+        constructors = ttk.Button(button_frame, text='Constructors', style='TButton', command=self.constructors_window)
         circuits = ttk.Button(button_frame, text='Circuits', style='TButton', command=self.circuit_window)
         simulation_game = ttk.Button(button_frame, text='Simulation Game', style='TButton', command=self.simulation_window)
         # Place the buttons in the grid

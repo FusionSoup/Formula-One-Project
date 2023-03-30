@@ -1,7 +1,5 @@
 import random
 
-# Define constants
-import ergast
 
 NUM_LAPS = 11
 TRACK_DISTANCE = 5.5

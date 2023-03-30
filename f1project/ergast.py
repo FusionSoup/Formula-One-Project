@@ -8,6 +8,7 @@ class Ergast:
     def __init__(self):
         """Create the instance, but don't populate the data tables yet"""
         self.driver_list = None
+        self.constructor_list = None
         self.circuit_list = None
         self.year_list = None
         self.url = "http://ergast.com/api/f1/"
@@ -15,8 +16,10 @@ class Ergast:
     def get_data(self):
         """Get the data tables from the online database"""
         self._get_driver_list()
+        self._get_constructor_list()
         self._get_circuit_list()
         self._get_year_list()
+
 
     def _get_driver_list(self):
         """Retrieve a list with one entry per driver"""
@@ -24,6 +27,13 @@ class Ergast:
         table_content = json.loads(table.content)
         driver_temp = table_content['MRData']['DriverTable']
         self.driver_list = driver_temp['Drivers']
+
+    def _get_constructor_list(self):
+        """Retrieve a list with one entry per constructor"""
+        table = requests.get(self.url + 'constructors.json?limit=300')
+        table_content = json.loads(table.content)
+        constructor_temp = table_content['MRData']['ConstructorTable']
+        self.constructor_list = constructor_temp['Constructors']
 
     def get_seasons_for_driver(self, driver_id):
         """Retrieve a list of seasons in which a driver competed"""
@@ -42,6 +52,14 @@ class Ergast:
     def get_seasons_for_circuit(self, circuit_id):
         """Retrieve a list of seasons in which a circuit was used"""
         table = requests.get(f'{self.url}circuits/{circuit_id}/seasons.json')
+        table_content = json.loads(table.content)
+        season_table = table_content['MRData']['SeasonTable']['Seasons']
+        season_list = [s['season'] for s in season_table]
+        return season_list
+
+    def get_seasons_for_constructor(self, constructor_id):
+        """Retrieve a list of seasons in which a constructor competed"""
+        table = requests.get(f'{self.url}constructors/{constructor_id}/seasons.json')
         table_content = json.loads(table.content)
         season_table = table_content['MRData']['SeasonTable']['Seasons']
         season_list = [s['season'] for s in season_table]
@@ -84,6 +102,23 @@ class Ergast:
             name = r['Driver']['givenName'] + ' ' + r['Driver']['familyName']
             circuit_race_results_list.append([r['position'], name, r['Driver']['driverId']])
         return circuit_race_results_list
+
+    def get_constructor_results_for_season(self, constructor_id, season):
+        """Retrieve a list of (position, driver name, driverId) results for a specific circuit in a season"""
+        table = requests.get(self.url + f'{season}/constructors/{constructor_id}/results.json')
+        table_content = json.loads(table.content)
+        race_table = table_content['MRData']['RaceTable']['Races']
+        constructor_race_results_list = []
+        for r in race_table:
+            d1 = r['Results'][0]['Driver']
+            d1_name = f"{d1['givenName']} {d1['familyName']}"
+            d1_points = r['Results'][0]['points']
+            d2 = r['Results'][1]['Driver']
+            d2_name = f"{d2['givenName']} {d2['familyName']}"
+            d2_points = r['Results'][1]['points']
+            constructor_race_results_list.append([r['raceName'], d1_name, d1_points,
+                                                  d2_name, d2_points, r['Circuit']['circuitId']])
+        return constructor_race_results_list
 
     def get_race_results(self, circuit_id, season):
         """Retrieve a list of (position, driver name, constructor, fastest lap, fastest lap speed, points, grid position, status, driverId)
@@ -137,6 +172,7 @@ class Ergast:
             pickle.dump(self.driver_list, f)
             pickle.dump(self.circuit_list, f)
             pickle.dump(self.year_list, f)
+            pickle.dump(self.constructor_list, f)
 
     def load_from_file(self, filename):
         """Load the whole database from a local file"""
@@ -145,6 +181,7 @@ class Ergast:
             self.driver_list = pickle.load(f)
             self.circuit_list = pickle.load(f)
             self.year_list = pickle.load(f)
+            self.constructor_list = pickle.load(f)
 
     def get_driver_standings(self, driver_id):
         table = requests.get(f"{self.url}drivers/{driver_id}/driverStandings.json")
