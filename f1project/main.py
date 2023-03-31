@@ -157,9 +157,9 @@ class F1Gui:
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
                 label.bind('<Button-1>',
-                           lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(evt, year, driver))
+                           lambda evt, year=selection, driver=results[i][2]: self.circuit_driver_click(year, driver))
 
-    def circuit_driver_click(self, evt, year, driver_id):
+    def circuit_driver_click(self, year, driver_id):
         self.driver_standings_window(selected_driver=driver_id)
 
     def get_wikipedia_summary(self, page):
@@ -452,7 +452,7 @@ class F1Gui:
                 label.grid(column=j, row=i + 1)
                 # Clicking on this row takes the user to that race
                 label.bind('<Button-1>',
-                           lambda evt, year=selection, circuit=results[i][5]: self.race_click(evt, year, circuit))
+                           lambda evt, year=selection, circuit=results[i][5]: self.race_click(year, circuit))
 
     def main_window(self):
         """Create the main menu"""
